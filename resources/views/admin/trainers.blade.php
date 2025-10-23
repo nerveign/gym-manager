@@ -96,47 +96,19 @@
                     </div>
                 </div>
                 <!-- Pagination -->
-                @if($trainers->total() > 0)
-                <div class="mt-6 flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
-                        Showing {{ $trainers->firstItem() }} to {{ $trainers->lastItem() }} of {{ $trainers->total() }} results
-                    </div>
-                    <div class="flex space-x-2">
-                        <!-- Previous Page -->
-                        @if($trainers->onFirstPage())
-                            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-chevron-left"></i>
-                            </span>
-                        @else
-                            <a href="{{ $trainers->previousPageUrl() }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        @endif
+                <x-pagination-footer
+                    firstItem="{{ $trainers->firstItem() }}"
+                    lastItem="{{ $trainers->lastItem() }}"
+                    total="{{ $trainers->total() }}"
+                    onFirstPage="{{ $trainers->onFirstPage() }}"
+                    hasMorePages="{{ $trainers->hasMorePages() }}"
+                    previousPageUrl="{{ $trainers->previousPageUrl() }}"
+                    nextPageUrl="{{ $trainers->nextPageUrl() }}"
+                    lastPage="{{ $trainers->lastPage() }}"
+                    currentPage="{{ $trainers->currentPage() }}"
+                    model="trainers"
+                />
 
-                        <!-- Page Numbers -->
-                        @foreach(range(1, $trainers->lastPage()) as $page)
-                            @if($page == $trainers->currentPage())
-                                <span class="px-3 py-1 bg-blue-600 text-white rounded-lg">{{ $page }}</span>
-                            @else
-                                <a href="{{ $trainers->url($page) }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                    {{ $page }}
-                                </a>
-                            @endif
-                        @endforeach
-
-                        <!-- Next Page -->
-                        @if($trainers->hasMorePages())
-                            <a href="{{ $trainers->nextPageUrl() }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        @else
-                            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-chevron-right"></i>
-                            </span>
-                        @endif
-                    </div>
-                </div>
-                @endif
             </main>
         </div>
     </div>

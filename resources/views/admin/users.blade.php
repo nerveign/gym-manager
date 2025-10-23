@@ -113,47 +113,19 @@
                     </div>
                 </div>
                 <!-- Pagination -->
-                @if($customers->total() > 0)
-                <div class="mt-6 flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
-                        Showing {{ $customers->firstItem() }} to {{ $customers->lastItem() }} of {{ $customers->total() }} results
-                    </div>
-                    <div class="flex space-x-2">
-                        <!-- Previous Page -->
-                        @if($customers->onFirstPage())
-                            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-chevron-left"></i>
-                            </span>
-                        @else
-                            <a href="{{ $customers->previousPageUrl() }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        @endif
+                <x-pagination-footer
+                    firstItem="{{ $customers->firstItem() }}"
+                    lastItem="{{ $customers->lastItem() }}"
+                    total="{{ $customers->total() }}"
+                    onFirstPage="{{ $customers->onFirstPage() }}"
+                    hasMorePages="{{ $customers->hasMorePages() }}"
+                    previousPageUrl="{{ $customers->previousPageUrl() }}"
+                    nextPageUrl="{{ $customers->nextPageUrl() }}"
+                    lastPage="{{ $customers->lastPage() }}"
+                    currentPage="{{ $customers->currentPage() }}"
+                    model="customers"
+                />
 
-                        <!-- Page Numbers -->
-                        @foreach(range(1, $customers->lastPage()) as $page)
-                            @if($page == $customers->currentPage())
-                                <span class="px-3 py-1 bg-blue-600 text-white rounded-lg">{{ $page }}</span>
-                            @else
-                                <a href="{{ $customers->url($page) }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                    {{ $page }}
-                                </a>
-                            @endif
-                        @endforeach
-
-                        <!-- Next Page -->
-                        @if($customers->hasMorePages())
-                            <a href="{{ $customers->nextPageUrl() }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        @else
-                            <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed">
-                                <i class="fas fa-chevron-right"></i>
-                            </span>
-                        @endif
-                    </div>
-                </div>
-                @endif
             </main>
         </div>
     </div>
