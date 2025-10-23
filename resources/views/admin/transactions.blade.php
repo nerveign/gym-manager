@@ -25,8 +25,8 @@
                 <x-nav-item text="Trainer" color="text-gray-600" src="user.svg" location="admin.trainers_management" />
                 <x-nav-item text="Booking" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
                 <x-nav-item text="Class" color="text-gray-600" src="class.svg" location="admin.classes_management" />
-                <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" style="bg-blue-50 border-r-4 border-blue-500"  />
-                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions_management" />
+                <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" />
+                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions_management" style="bg-blue-50 border-r-4 border-blue-500" />
             </nav>
             
             <!-- User Profile Section -->
@@ -56,7 +56,7 @@
 
             <!-- Scrollable Content -->
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
-                <h2 class="text-lg font-medium" >Equipment page</h2>
+                <h2 class="text-lg font-medium" >Transaction page</h2>
             </main>
         </div>
     </div>

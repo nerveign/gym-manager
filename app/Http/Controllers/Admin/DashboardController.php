@@ -105,6 +105,16 @@ class DashboardController extends Controller
         $user = auth()->user();
         return view('admin.equipments', compact('user'));
     }
+
+    public function transactions(){
+          if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized access for admin only.');
+        }
+
+        $user = auth()->user();
+        return view('admin.transactions', compact('user'));
+    }
+
     private function getEquipmentStats()
     {
         return Equipment::count();

@@ -24,6 +24,7 @@
                 <x-nav-item text="Booking" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
                 <x-nav-item text="Class" color="text-gray-600" src="class.svg" location="admin.classes_management" />
                 <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" />
+                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions_management" />
             </nav>
             
             <!-- User Profile Section -->
@@ -58,6 +59,19 @@
                      <h2 class="text-xl font-semibold text-gray-900">Overview</h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+                    <!-- Monthly Revenue -->
+                    <div class="bg-white rounded-xl p-6 border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                                <p class="text-2xl font-semibold text-gray-900 mt-1">Rp. 1.450.000</p>
+                            </div>
+                            <div class="p-3 bg-purple-100 rounded-lg">
+                                <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Total Members Card -->
                     <div class="bg-white rounded-xl p-6 border">
                         <div class="flex items-center justify-between">
@@ -80,19 +94,6 @@
                             </div>
                             <div class="p-3 bg-green-100 rounded-lg">
                                 <i class="fas fa-id-card text-green-600 text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Monthly Revenue -->
-                    <div class="bg-white rounded-xl p-6 border">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                                <p class="text-2xl font-semibold text-gray-900 mt-1">Rp. 1.450.000</p>
-                            </div>
-                            <div class="p-3 bg-purple-100 rounded-lg">
-                                <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
                             </div>
                         </div>
                     </div>

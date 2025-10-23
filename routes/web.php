@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/booking', [DashboardController::class, 'bookings'])->name('bookings_management');
     Route::get('/dashboard/class', [DashboardController::class, 'classes'])->name('classes_management');
     Route::get('/dashboard/equipment', [DashboardController::class, 'equipments'])->name('equipments_management');
+    Route::get('/dashboard/transaction', [DashboardController::class, 'transactions'])->name('transactions_management');
 });
 // Trainer Routes  
 Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')->name('trainer.')->group(function () {
