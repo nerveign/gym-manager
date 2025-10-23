@@ -18,7 +18,6 @@
                 
                 <x-nav-item text="Home" color="text-zinc-700" src="home.svg" location="admin.dashboard" />
 
-
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Management</div>
                 
                 <x-nav-item text="Users" color="text-zinc-700" src="users.svg" location="admin.users_management"  style="bg-blue-50 border-r-4 border-blue-500" />
