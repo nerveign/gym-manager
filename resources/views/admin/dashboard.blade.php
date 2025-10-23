@@ -66,7 +66,7 @@
                                 <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
                                 <p class="text-2xl font-semibold text-gray-900 mt-1">Rp. 1.450.000</p>
                             </div>
-                            <div class="p-3 bg-purple-100 rounded-lg">
+                            <div class="size-12 flex items-center justify-center bg-purple-100 rounded-lg">
                                 <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
                                 <p class="text-sm font-medium text-gray-600">Total Users</p>
                                 <p class="text-2xl font-semibold text-gray-900 mt-1">{{ $stats['customer_count'] }}</p>
                             </div>
-                            <div class="p-3 bg-blue-100 rounded-lg">
+                            <div class="size-12 flex items-center justify-center bg-blue-100 rounded-lg">
                                 <i class="fas fa-users text-blue-600 text-xl"></i>
                             </div>
                         </div>
@@ -92,7 +92,7 @@
                                 <p class="text-sm font-medium text-gray-600">Active Memberships</p>
                                 <p class="text-2xl font-semibold text-gray-900 mt-1">{{ $stats['membership_count'] }}</p>
                             </div>
-                            <div class="p-3 bg-green-100 rounded-lg">
+                            <div class="size-12 flex items-center justify-center bg-green-100 rounded-lg">
                                 <i class="fas fa-id-card text-green-600 text-xl"></i>
                             </div>
                         </div>
@@ -105,7 +105,7 @@
                                 <p class="text-sm font-medium text-gray-600">Equipment</p>
                                 <p class="text-2xl font-semibold text-gray-900 mt-1">{{ $stats['equipment_count'] }}</p>
                             </div>
-                            <div class="p-3 bg-orange-100 rounded-lg">
+                            <div class="size-12 flex items-center justify-center bg-orange-100 rounded-lg">
                                 <i class="fas fa-dumbbell text-orange-600 text-xl"></i>
                             </div>
                         </div>
