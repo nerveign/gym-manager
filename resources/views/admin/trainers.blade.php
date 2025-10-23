@@ -56,6 +56,10 @@
 
             <!-- Scrollable Content -->
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
+                <x-search-bar 
+                    action="{{ route('admin.trainers_management') }}" 
+                    placeholder="Search users by name, email, or phone..."
+                />
                 <!-- Recent Members Table -->
                 <div class="bg-white rounded-xl border">
                     <div class="px-6 py-3 border-b border-gray-100 flex justify-between items-center">
