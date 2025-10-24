@@ -25,6 +25,10 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            // PERUBAHAN: Menambahkan validasi 'phone'. 
+            // Menggunakan 'nullable' agar pengguna boleh mengosongkannya,
+            // atau ganti menjadi 'required' jika Anda ingin memaksa pengisian.
+            'phone' => ['nullable', 'string', 'max:15'], 
         ];
     }
 }
