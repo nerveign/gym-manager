@@ -48,10 +48,10 @@
                 </div>
                 <div>
                     <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500">
-                            </button>
+                        @csrf
+                        <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                            <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500">
+                        </button>
                     </form>
                 </div>
             </div>
@@ -83,7 +83,8 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Active Membership</label>
                                         <div class="p-3 bg-gray-50 rounded-lg border">
-                                            <p class="text-gray-900 font-medium">{{ $user->name }}</sppan>
+                                            {{-- Perbaiki typo </sppan> menjadi </span> --}}
+                                            <p class="text-gray-900 font-medium">{{ $user->name }}</p>
                                             <p class="text-sm text-gray-600">Expires on: {{ \Carbon\Carbon::parse($activeMembership->end_time)->format('d M Y') }}</p>
                                         </div>
                                         {{-- Hidden input untuk membership_id --}}
@@ -141,16 +142,21 @@
                                         </div>
                                     </div>
 
-                                    <!-- Duration Field -->
+                                    <!-- Duration Field (Disabled) -->
                                     <div>
-                                        <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">
-                                            Duration (minutes) *
+                                        <label for="duration_display" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Duration (minutes)
                                         </label>
-                                        <input type="number" id="duration" name="duration"
-                                               value="{{ old('duration', 60) }}" {{-- Default 60 menit --}}
-                                               min="30" max="120" step="15" disabled{{-- Contoh: min 30, max 120, kelipatan 15 --}}
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                               required>
+                                        {{-- Tambahkan atribut disabled dan ubah id --}}
+                                        <input type="number" id="duration_display"
+                                               value="60" {{-- Default 60 menit --}}
+                                               disabled {{-- Nonaktifkan input --}}
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"> {{-- Styling disabled --}}
+
+                                        {{-- Tambahkan input hidden untuk mengirim nilai 60 --}}
+                                        <input type="hidden" name="duration" value="60">
+
+                                        {{-- Error 'duration' tidak relevan lagi jika disabled, tapi bisa dibiarkan --}}
                                         @error('duration')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror
