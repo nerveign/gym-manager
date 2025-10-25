@@ -4,6 +4,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerProgressController;
+// === TAMBAHKAN CONTROLLER BOOKING ===
+use App\Http\Controllers\Customer\CustomerBookingController;
+// ===================================
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Membership;
@@ -44,7 +47,7 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/trainer', [AdminDashboardController::class, 'trainers'])->name('trainers_management');
     Route::get('/dashboard/booking', [AdminDashboardController::class, 'bookings'])->name('bookings_management');
     Route::get('/dashboard/class', [AdminDashboardController::class, 'classes'])->name('classes_management');
-    Route::get('/dashboard/equipment', [AdminDashboardController::class, 'equipments'])->name('equipments_management'); 
+    Route::get('/dashboard/equipment', [AdminDashboardController::class, 'equipments'])->name('equipments_management');
     Route::get('/dashboard/transaction', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
 });
 
@@ -53,13 +56,20 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
 Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
 
-    // EQUIPMENT ROUTE BARU
+    // EQUIPMENT ROUTE
     Route::get('/equipment', [CustomerDashboardController::class, 'equipments'])->name('equipments.index');
+
+    // TRAINER ROUTE
+    Route::get('/trainers', [CustomerDashboardController::class, 'trainers'])->name('trainers.index');
 
     // Progress Tracking Routes
     Route::resource('progress', CustomerProgressController::class);
 
-    // ROUTE BOOKING DIHAPUS (Sesuai permintaan terakhir)
+    // === PASTIKAN BOOKING RESOURCE ADA ===
+    // Ini akan otomatis membuat rute: index, create, store, show, edit, update, destroy
+    Route::resource('bookings', CustomerBookingController::class);
+    // =====================================
+
 });
 
 
