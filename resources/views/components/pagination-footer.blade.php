@@ -34,7 +34,7 @@
             @if($page == $currentPage)
                 <span class="px-3 py-1 bg-blue-600 text-white rounded-lg">{{ $page }}</span>
             @else
-                <a href="{{ $pageUrl($page) }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <a href="{{ request()->fullUrlWithQuery(['page' => $page]) }}" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                     {{ $page }}
                 </a>
             @endif

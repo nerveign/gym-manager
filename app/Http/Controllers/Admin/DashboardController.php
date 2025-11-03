@@ -8,6 +8,7 @@ use App\Models\GymClass;
 use App\Models\Membership;
 use App\Models\User;
 use App\Models\Equipment;
+use App\Models\Transaction; 
 use Illuminate\Http\Request; 
 
 class DashboardController extends Controller
@@ -27,6 +28,12 @@ class DashboardController extends Controller
             'trainer_count' => $this->getTotalTrainers(),
             'class_count' => $this->getTotalClasses(),
             'booking_count' => $this->getTotalBookings()
+        ];
+
+        // Tambahkan revenue calculation menggunakan data yang sama dengan transactions method
+        $revenue = [
+            'monthly' => $this->getMonthlyRevenue(),
+            'total' => $this->getTotalRevenue()
         ];
 
         // Recent Members
@@ -49,7 +56,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        return view('admin.dashboard', compact('stats', 'recentMemberships', 'user'));
+        return view('admin.dashboard', compact('stats', 'recentMemberships', 'user', 'revenue'));
     }
 
     public function users(Request $request) 
@@ -60,21 +67,22 @@ class DashboardController extends Controller
 
         $user = auth()->user();
         
-        // Query dengan search
-        $query = User::with(['membership'])
-            ->where('role', 'customer');
+        // Query dengan search - ambil customer beserta membership (jika ada)
+        $query = User::leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
+            ->select('users.*', 'memberships.status as membership_status', 'memberships.created_at as membership_created_at')
+            ->where('users.role', 'customer');
 
         // Fitur search
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('email', 'like', "%{$searchTerm}%")
-                  ->orWhere('phone', 'like', "%{$searchTerm}%");
+                $q->where('users.name', 'like', "%{$searchTerm}%")
+                  ->orWhere('users.email', 'like', "%{$searchTerm}%")
+                  ->orWhere('users.phone', 'like', "%{$searchTerm}%");
             });
         }
 
-        $customers = $query->latest()->paginate(10);
+        $customers = $query->latest('users.created_at')->paginate(10);
 
         return view('admin.users', compact('user', 'customers'));
     }
@@ -161,8 +169,9 @@ class DashboardController extends Controller
         
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
-            $query->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            $query->where('equipment_name', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%")
+                  ->orWhere('brand', 'like', "%{$searchTerm}%");
         }
         
         $equipments = $query->latest()->paginate(10);
@@ -220,5 +229,18 @@ class DashboardController extends Controller
     private function getTotalClasses()
     {
         return GymClass::count();
+    }
+
+    private function getMonthlyRevenue()
+    {
+        return Transaction::where('status', 'completed')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('amount');
+    }
+
+    private function getTotalRevenue()
+    {
+        return Transaction::where('status', 'completed')->sum('amount');
     }
 }

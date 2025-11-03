@@ -6,6 +6,7 @@ use App\Http\Controllers\Customer\DashboardController as CustomerDashboardContro
 use App\Http\Controllers\Customer\CustomerProgressController;
 // === TAMBAHKAN CONTROLLER BOOKING ===
 use App\Http\Controllers\Customer\CustomerBookingController;
+use App\Http\Controllers\Customer\PaymentController as CustomerPaymentController;
 // ===================================
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -47,6 +48,12 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/trainer', [AdminDashboardController::class, 'trainers'])->name('trainers_management');
     Route::get('/dashboard/booking', [AdminDashboardController::class, 'bookings'])->name('bookings_management');
     Route::get('/dashboard/class', [AdminDashboardController::class, 'classes'])->name('classes_management');
+    
+    // Transaction Routes
+    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{id}', [AdminTransactionController::class, 'show'])->name('transactions.show');
+    Route::put('/transactions/{id}/status', [AdminTransactionController::class, 'updateStatus'])->name('transactions.updateStatus');
+    Route::delete('/transactions/{id}', [AdminTransactionController::class, 'destroy'])->name('transactions.destroy');
     Route::get('/dashboard/equipment', [AdminDashboardController::class, 'equipments'])->name('equipments_management');
     Route::get('/dashboard/transaction', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
 });
@@ -69,6 +76,15 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
     // Ini akan otomatis membuat rute: index, create, store, show, edit, update, destroy
     Route::resource('bookings', CustomerBookingController::class);
     // =====================================
+
+        // PAYMENT ROUTES untuk aktivasi membership
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::get('/', [CustomerPaymentController::class, 'show'])->name('show');
+        Route::post('/process', [CustomerPaymentController::class, 'process'])->name('process');
+        Route::get('/success', [CustomerPaymentController::class, 'success'])->name('success');
+        Route::post('/verify', [CustomerPaymentController::class, 'verifyPayment'])->name('verify');
+        Route::post('/activate', [CustomerPaymentController::class, 'activateNow'])->name('activate');
+    });
 
 });
 

@@ -87,6 +87,53 @@
                             @enderror
                         </div>
 
+                        <!-- Phone -->
+                        <div class="space-y-2">
+                            <label for="phone" class="text-sm font-medium text-gray-700 block">
+                                Nomor Telepon
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-phone text-gray-400"></i>
+                                </div>
+                                <input 
+                                    id="phone"
+                                    type="text"
+                                    name="phone"
+                                    value="{{ old('phone') }}"
+                                    placeholder="08123456789"
+                                    autocomplete="tel"
+                                    class="w-full pl-10 h-10 px-4 py-2 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors"
+                                >
+                            </div>
+                            @error('phone')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Address -->
+                        <div class="space-y-2">
+                            <label for="address" class="text-sm font-medium text-gray-700 block">
+                                Alamat
+                            </label>
+                            <div class="relative">
+                                <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                </div>
+                                <textarea 
+                                    id="address"
+                                    name="address"
+                                    rows="2"
+                                    placeholder="Alamat lengkap"
+                                    autocomplete="address-line1"
+                                    class="w-full pl-10 px-4 py-2 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors resize-none"
+                                >{{ old('address') }}</textarea>
+                            </div>
+                            @error('address')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Password -->
                         <div class="space-y-2">
                             <label for="password" class="text-sm font-medium text-gray-700 block">

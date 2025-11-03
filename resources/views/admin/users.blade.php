@@ -25,7 +25,7 @@
                 <x-nav-item text="Booking" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
                 <x-nav-item text="Class" color="text-gray-600" src="class.svg" location="admin.classes_management" />
                 <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" />
-                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions_management" />
+                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions.index" />
             </nav>
             
             <!-- User Profile Section -->
@@ -40,12 +40,14 @@
                     </div>
                 </div>
                 <div>
-                    <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                <img src="{{ asset('icons/logout.svg') }}" alt="logout">
-                            </button>
+                    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+                        @csrf
                     </form>
+                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();" 
+                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 mr-1">
+                        <span>Logout</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -86,23 +88,29 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="py-4 text-gray-600">{{ $customer->membership->created_at->format('d M Y') }}</td>
+                                            <td class="py-4 text-gray-600">
+                                                @if($customer->membership_created_at)
+                                                    {{ \Carbon\Carbon::parse($customer->membership_created_at)->format('d M Y') }}
+                                                @else
+                                                    <span class="text-gray-400">No Date</span>
+                                                @endif
+                                            </td>
                                             <td class="py-4">
-                                                    @if($customer->membership)
-                                                        @if($customer->membership->status == 'active')
-                                                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                                                                Active
-                                                            </span>
-                                                        @else
-                                                            <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                                                                Inactive
-                                                            </span>
-                                                        @endif
+                                                @if($customer->membership_status)
+                                                    @if($customer->membership_status == 'active')
+                                                        <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                            Active
+                                                        </span>
                                                     @else
-                                                        <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                                                            No Membership
+                                                        <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                                            Inactive
                                                         </span>
                                                     @endif
+                                                @else
+                                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                                                        No Membership
+                                                    </span>
+                                                @endif
                                             </td>
                                         </tr>
                                         @endforeach
@@ -112,18 +120,9 @@
                     </div>
                 </div>
                 <!-- Pagination -->
-                <x-pagination-footer
-                    firstItem="{{ $customers->firstItem() }}"
-                    lastItem="{{ $customers->lastItem() }}"
-                    total="{{ $customers->total() }}"
-                    onFirstPage="{{ $customers->onFirstPage() }}"
-                    hasMorePages="{{ $customers->hasMorePages() }}"
-                    previousPageUrl="{{ $customers->previousPageUrl() }}"
-                    nextPageUrl="{{ $customers->nextPageUrl() }}"
-                    lastPage="{{ $customers->lastPage() }}"
-                    currentPage="{{ $customers->currentPage() }}"
-                    model="customers"
-                />
+                <div class="mt-6">
+                    {{ $customers->links() }}
+                </div>
 
             </main>
         </div>

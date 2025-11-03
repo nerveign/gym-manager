@@ -120,6 +120,17 @@ class UserSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name'      => 'Test Unactive',
+                'email'     => 'testunactive@example.com',
+                'phone'     => '081234560001',
+                'password'  =>  Hash::make('test123'),
+                'address'   => 'Jl. Test No. 11, Jakarta',
+                'image_url' => 'https://images.unsplash.com/photo-1494790108755-2616b612b442?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
+                'role'      => 'customer',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

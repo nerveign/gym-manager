@@ -38,12 +38,14 @@
                     </div>
                 </div>
                 <div>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
                         @csrf
-                        <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                            <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500">
-                        </button>
                     </form>
+                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();" 
+                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 mr-1">
+                        <span>Logout</span>
+                    </button>
                 </div>
             </div>
         </div>

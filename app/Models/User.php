@@ -11,7 +11,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-    'name', 'email', 'password', 'phone', 'role', 'image_url', 'address'
+        'name', 'email', 'password', 'phone', 'role', 'image_url', 'address'
     ];
 
     protected $hidden = [
@@ -66,5 +66,16 @@ class User extends Authenticatable
      public function hasActiveMembership(): bool
     {
         return $this->activeMembership()->exists();
+    }
+
+    public function hasInactiveMembership(): bool
+    {
+        return $this->membership()->where('status', 'inactive')->exists();
+    }
+
+    public function needsPaymentActivation(): bool
+    {
+        // Jika customer dan tidak memiliki membership aktif
+        return $this->isCustomer() && !$this->hasActiveMembership();
     }
 }

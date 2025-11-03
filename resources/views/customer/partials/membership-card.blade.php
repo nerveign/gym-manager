@@ -82,12 +82,24 @@
                     <p class="text-sm font-medium text-gray-600">Membership Status</p>
                     <p class="text-3xl font-bold text-red-600">Inactive</p>
                     <p class="text-sm text-gray-500">
-                        <i class="fas fa-info-circle mr-1"></i> Please renew your membership now.
+                        <i class="fas fa-info-circle mr-1"></i> Please activate your membership now.
                     </p>
                 </div>
                 <div class="size-12 flex items-center justify-center bg-red-50 rounded-lg">
                     <i class="fas fa-times-circle text-red-600 text-2xl"></i>
                 </div>
+            </div>
+            
+            {{-- Tombol Payment untuk Aktivasi Membership --}}
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <a href="{{ route('customer.payment.show') }}" 
+                   class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Bayar untuk Aktifkan Membership
+                </a>
+                <p class="text-xs text-gray-500 text-center mt-2">
+                    Membership berlaku 30 hari setelah pembayaran
+                </p>
             </div>
         @endif
     </div>

@@ -22,23 +22,17 @@ class MembershipSeeder extends Seeder
         $memberships = [];
         
         foreach ($customers as $index => $customer) {
-            $startDate = Carbon::now()->subDays(rand(1, 30));
-            $endDate = $startDate->copy()->addDays(30);
-            
+            // Semua customer dibuat dengan status inactive untuk testing payment
             $memberships[] = [
                 'user_id'       => $customer->id,
-                'start_time'    => $startDate,
-                'end_time'      => $endDate,
+                'start_time'    => null,
+                'end_time'      => null,
                 'total_amount'  => 200000,
-                'status'        => $this->getMembershipStatus($endDate),
-                'payment_status'=> $this->getRandomPaymentStatus(),
+                'status'        => 'inactive',
+                'payment_status'=> 'pending',
                 'created_at'    => now(),
                 'updated_at'    => now(),
             ];
-            
-            if ($index >= 9) {
-                break;
-            }
         }
 
         DB::table('memberships')->insert($memberships);

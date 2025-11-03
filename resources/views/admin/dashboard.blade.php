@@ -24,7 +24,7 @@
                 <x-nav-item text="Booking" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
                 <x-nav-item text="Class" color="text-gray-600" src="class.svg" location="admin.classes_management" />
                 <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" />
-                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions_management" />
+                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions.index" />
             </nav>
             
             <!-- User Profile Section -->
@@ -39,12 +39,14 @@
                     </div>
                 </div>
                 <div>
-                    <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                <img src="{{ asset('icons/logout.svg') }}" alt="logout">
-                            </button>
+                    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+                        @csrf
                     </form>
+                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();" 
+                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 mr-1">
+                        <span>Logout</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -64,7 +66,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                                <p class="text-2xl font-semibold text-gray-900 mt-1">Rp. 1.450.000</p>
+                                <p class="text-2xl font-semibold text-gray-900 mt-1">Rp {{ number_format($revenue['monthly'], 0, ',', '.') }}</p>
                             </div>
                             <div class="size-12 flex items-center justify-center bg-purple-100 rounded-lg">
                                 <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
@@ -221,7 +223,21 @@
                                             </td>
                                             <td class="py-4 text-gray-600"> {{ $membership->created_at->format('d M Y') }}</td>
                                             <td class="py-4">
-                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">{{ $membership->status }}</span>
+                                                @php
+                                                    $statusColors = [
+                                                        'active' => 'bg-green-100 text-green-800',
+                                                        'inactive' => 'bg-gray-100 text-gray-800',
+                                                        'expired' => 'bg-red-100 text-red-800'
+                                                    ];
+                                                    $statusLabels = [
+                                                        'active' => 'Aktif',
+                                                        'inactive' => 'Tidak Aktif',
+                                                        'expired' => 'Kadaluarsa'
+                                                    ];
+                                                @endphp
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $statusColors[$membership->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                                    {{ $statusLabels[$membership->status] ?? ucfirst($membership->status) }}
+                                                </span>
                                             </td>
                                         </tr>
                                         @endforeach 
