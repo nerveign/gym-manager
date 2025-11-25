@@ -16,22 +16,28 @@
             <nav class="mt-6">
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400">Main</div>
                 
-                <x-nav-item text="Home" color="text-zinc-700" src="home.svg" location="admin.dashboard" style="bg-blue-50 border-r-4 border-blue-500" />
+                <x-nav-item text="Dashboard" color="text-zinc-700" src="home.svg" location="admin.dashboard" style="bg-blue-50 border-r-4 border-blue-500" />
                 
-                <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Management</div>                
+                <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Manajemen Data</div>                
                 <x-nav-item text="Users" color="text-zinc-700" src="users.svg" location="admin.users_management" />
-                <x-nav-item text="Trainer" color="text-gray-600" src="user.svg" location="admin.trainers_management" />
-                <x-nav-item text="Booking" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
-                <x-nav-item text="Class" color="text-gray-600" src="class.svg" location="admin.classes_management" />
+                <x-nav-item text="Trainers" color="text-gray-600" src="user.svg" location="admin.trainers_management" />
+                <x-nav-item text="Bookings" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
+                <x-nav-item text="Classes" color="text-gray-600" src="class.svg" location="admin.classes_management" />
                 <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" />
-                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions.index" />
+                <x-nav-item text="Transactions" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions_management" />
             </nav>
             
             <!-- User Profile Section -->
             <div class="absolute bottom-0 w-64 p-4  flex justify-between bg-white">
                 <div class="flex items-center">
-                    <a href={{ route('profile.edit') }}>
-                        <img class="w-8 h-8 rounded-full" src="{{ $user->image_url }}" alt="{{ $user->name }}">
+                    <a href="{{ route('profile.edit') }}">
+                        @if($user->image_url)
+                            <img class="w-8 h-8 rounded-full object-cover" src="{{ $user->image_url }}" alt="{{ $user->name }}">
+                        @else
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-user text-gray-400 text-sm"></i>
+                            </div>
+                        @endif
                     </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ $user->name }}</p>
@@ -57,9 +63,6 @@
             <!-- Scrollable Content -->
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
                 <!-- Stats Cards -->
-                <div class="p-2" >
-                     <h2 class="text-xl font-semibold text-gray-900">Overview</h2>
-                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
                     <!-- Monthly Revenue -->
                     <div class="bg-white rounded-xl p-6 border">
@@ -116,45 +119,32 @@
 
                 <!-- Charts and Tables Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                    <!-- Recent Activity -->
+                    <!-- Recent Trainers -->
                     <div class="bg-white rounded-xl border">
-                        <div class="p-6 border-b border-gray-100">
-                            <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Trainers</h3>
+                            <a href="{{ route('admin.trainers_management') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
+                                View All
+                            </a>
                         </div>
                         <div class="p-6">
                             <div class="space-y-4">
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-user-plus text-green-600"></i>
+                                @foreach($recentTrainers as $trainer)
+                                    <div class="flex items-center space-x-4">
+                                        @if($trainer->image_url)
+                                            <img class="w-10 h-10 rounded-full object-cover flex-shrink-0" src="{{ $trainer->image_url }}" alt="{{ $trainer->name }}">
+                                        @else
+                                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-user text-gray-400"></i>
+                                            </div>
+                                        @endif
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">{{ $trainer->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ $trainer->email }}</p>
+                                        </div>
+                                        <span class="text-xs text-gray-400 flex-shrink-0">{{ $trainer->created_at->diffForHumans() }}</span>
                                     </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-900">New member registered</p>
-                                        <p class="text-xs text-gray-500">John Doe joined the gym</p>
-                                    </div>
-                                    <span class="text-xs text-gray-400 flex-shrink-0">2 min ago</span>
-                                </div>
-                                
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-dumbbell text-blue-600"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-900">New class scheduled</p>
-                                        <p class="text-xs text-gray-500">Yoga class by Trainer Sarah</p>
-                                    </div>
-                                    <span class="text-xs text-gray-400 flex-shrink-0">1 hour ago</span>
-                                </div>
-                                
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-credit-card text-purple-600"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-900">Payment received</p>
-                                        <p class="text-xs text-gray-500">Monthly membership - $99</p>
-                                    </div>
-                                    <span class="text-xs text-gray-400 flex-shrink-0">3 hours ago</span>
-                                </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -183,19 +173,19 @@
                                 </div>
                                 <div class="text-center p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors duration-200">
                                     <i class="fas fa-chart-line text-orange-600 text-2xl mb-2"></i>
-                                    <p class="text-sm text-gray-600">Occupancy Rate</p>
-                                    <p class="text-xl font-bold text-gray-900">78%</p>
+                                    <p class="text-sm text-gray-600">Total Revenue</p>
+                                    <p class="text-xl font-bold text-gray-900">Rp {{ number_format($revenue['total'] / 1000000, 1) }}M</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Members Table -->
+                <!-- Recent Transactions Table -->
                 <div class="bg-white rounded-xl border">
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-gray-900">Recent Members</h3>
-                        <a href="{{ route('admin.users_management') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                        <a href="{{ route('admin.transactions_management') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200">
                             View All
                         </a>
                     </div>
@@ -204,43 +194,60 @@
                             <table class="w-full">
                                 <thead>
                                     <tr class="text-left text-sm text-gray-500 border-b">
-                                        <th class="pb-3 font-medium">Member</th>
-                                        <th class="pb-3 font-medium">Join Date</th>
+                                        <th class="pb-3 font-medium">Transaction ID</th>
+                                        <th class="pb-3 font-medium">User</th>
+                                        <th class="pb-3 font-medium">Amount</th>
                                         <th class="pb-3 font-medium">Status</th>
+                                        <th class="pb-3 font-medium">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
-                                    @foreach($recentMemberships as $membership)
+                                    @foreach($recentTransactions as $transaction)
                                         <tr class="hover:bg-gray-50 transition-colors duration-200">
                                             <td class="py-4">
+                                                <p class="font-medium text-gray-900">#{{ $transaction->id }}</p>
+                                                <p class="text-sm text-gray-500">{{ $transaction->order_id ?? 'N/A' }}</p>
+                                            </td>
+                                            <td class="py-4">
                                                 <div class="flex items-center">
-                                                    <img class="w-8 h-8 rounded-full mr-3" src="{{ $membership->user_image }}" alt="John Doe">
+                                                    @if($transaction->membership && $transaction->membership->user && $transaction->membership->user->image_url)
+                                                        <img class="w-8 h-8 rounded-full object-cover mr-3" src="{{ $transaction->membership->user->image_url }}" alt="{{ $transaction->membership->user->name }}">
+                                                    @else
+                                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                                            <i class="fas fa-user text-gray-400 text-sm"></i>
+                                                        </div>
+                                                    @endif
                                                     <div>
-                                                        <p class="font-medium text-gray-900">{{ $membership->user_name  }}</p>
-                                                        <p class="text-sm text-gray-500">{{  $membership->user_email }}</p>
+                                                        <p class="font-medium text-gray-900">{{ $transaction->membership->user->name ?? 'Unknown User' }}</p>
+                                                        <p class="text-sm text-gray-500">{{ $transaction->membership->user->email ?? 'N/A' }}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="py-4 text-gray-600"> {{ $membership->created_at->format('d M Y') }}</td>
+                                            <td class="py-4 text-gray-600 font-medium">Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
                                             <td class="py-4">
                                                 @php
                                                     $statusColors = [
-                                                        'active' => 'bg-green-100 text-green-800',
-                                                        'inactive' => 'bg-gray-100 text-gray-800',
-                                                        'expired' => 'bg-red-100 text-red-800'
+                                                        'completed' => 'bg-green-100 text-green-800',
+                                                        'success' => 'bg-green-100 text-green-800',
+                                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                                        'failed' => 'bg-red-100 text-red-800',
+                                                        'cancelled' => 'bg-gray-100 text-gray-800'
                                                     ];
                                                     $statusLabels = [
-                                                        'active' => 'Aktif',
-                                                        'inactive' => 'Tidak Aktif',
-                                                        'expired' => 'Kadaluarsa'
+                                                        'completed' => 'Completed',
+                                                        'success' => 'Completed',
+                                                        'pending' => 'Pending',
+                                                        'failed' => 'Failed',
+                                                        'cancelled' => 'Cancelled'
                                                     ];
                                                 @endphp
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $statusColors[$membership->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                                    {{ $statusLabels[$membership->status] ?? ucfirst($membership->status) }}
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $statusColors[$transaction->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                                    {{ $statusLabels[$transaction->status] ?? ucfirst($transaction->status) }}
                                                 </span>
                                             </td>
+                                            <td class="py-4 text-gray-600">{{ $transaction->created_at->format('d M Y') }}</td>
                                         </tr>
-                                        @endforeach 
+                                    @endforeach 
                                 </tbody>
                             </table>
                         </div>

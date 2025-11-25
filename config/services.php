@@ -18,6 +18,13 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+    'payment' => [
+        'api_key' => env('PAYMENT_API_KEY', 'Ug63WqTm7TfCeBqEdGh44KeVjUWzsD1l'),
+        'base_url' => env('PAYMENT_BASE_URL', 'https://payment-dummy.doovera.com/api/v1'),
+        'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET', 'hxSLro4mhDg9napdJpqbpKOirKPEC29R'),
+        'expired_hours' => env('PAYMENT_EXPIRED_HOURS', 24),
+    ],
+
     'resend' => [
         'key' => env('RESEND_KEY'),
     ],
@@ -41,6 +48,13 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
         'is_sanitized' => env('MIDTRANS_IS_SANITIZED', true),
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
+    ],
+
+    'payment' => [
+        'api_key' => env('PAYMENT_API_KEY'),
+        'base_url' => env('PAYMENT_BASE_URL'),
+        'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
+        'expired_hours' => env('PAYMENT_EXPIRED_HOURS', 24),
     ],
 
 ];

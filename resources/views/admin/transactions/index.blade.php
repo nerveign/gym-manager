@@ -16,23 +16,27 @@
             <nav class="mt-6">
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400">Main</div>
                 
-                <x-nav-item text="Home" color="text-zinc-700" src="home.svg" location="admin.dashboard" />
-                
-                <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Management</div>                
-                <x-nav-item text="Users" color="text-zinc-700" src="users.svg" location="admin.users_management" />
-                <x-nav-item text="Trainer" color="text-gray-600" src="user.svg" location="admin.trainers_management" />
-                <x-nav-item text="Booking" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
-                <x-nav-item text="Class" color="text-gray-600" src="class.svg" location="admin.classes_management" />
+                <x-nav-item text="Dashboard" color="text-gray-600" src="home.svg" location="admin.dashboard" />
+
+                <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Manajemen Data</div>                
+                <x-nav-item text="Users" color="text-gray-600" src="users.svg" location="admin.users_management" />
+                <x-nav-item text="Trainers" color="text-gray-600" src="user.svg" location="admin.trainers_management" />
+                <x-nav-item text="Bookings" color="text-gray-600" src="calendar.svg" location="admin.bookings_management" />
+                <x-nav-item text="Classes" color="text-gray-600" src="class.svg" location="admin.classes_management" />
                 <x-nav-item text="Equipment" color="text-gray-600" src="equipment.svg" location="admin.equipments_management" />
-                <x-nav-item text="Transaction" color="text-gray-600" src="dollar-sign.svg" location="admin.transactions.index" style="bg-blue-50 border-r-4 border-blue-500" />
+                <x-nav-item text="Transactions" color="text-blue-600" src="dollar-sign.svg" location="admin.transactions.index" style="bg-blue-50 border-r-4 border-blue-500" />
             </nav>
             
             <!-- User Profile Section -->
-            <div class="absolute bottom-0 w-64 p-4  flex justify-between bg-white">
+            <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
-                    <a href="{{ route('profile.edit') }}">
-                        <img class="w-8 h-8 rounded-full" src="{{ auth()->user()->image_url }}" alt="{{ auth()->user()->name }}">
-                    </a>
+                    @if(auth()->user()->image_url)
+                        <img class="w-8 h-8 rounded-full object-cover" src="{{ auth()->user()->image_url }}" alt="{{ auth()->user()->name }}">
+                    @else
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-400 text-sm"></i>
+                        </div>
+                    @endif
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</p>
                         <p class="text-xs text-gray-500">Administrator</p>
@@ -57,7 +61,7 @@
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
                 <!-- Header -->
                 <div class="p-2">
-                    <h2 class="text-xl font-semibold text-gray-900">Manajemen Transaksi</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Transactions Management</h2>
                     <p class="text-gray-600">Kelola semua transaksi pembayaran membership</p>
                 </div>
 
@@ -217,10 +221,10 @@
                                             <div class="flex items-center">
                                                 @if($transaction->membership && $transaction->membership->user)
                                                     @if($transaction->membership->user->image_url)
-                                                        <img class="h-8 w-8 rounded-full" src="{{ $transaction->membership->user->image_url }}" alt="">
+                                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ $transaction->membership->user->image_url }}" alt="">
                                                     @else
-                                                        <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                                            <i class="fas fa-user text-gray-600"></i>
+                                                        <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                                            <i class="fas fa-user text-gray-400 text-sm"></i>
                                                         </div>
                                                     @endif
                                                     <div class="ml-3">

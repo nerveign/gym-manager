@@ -11,9 +11,9 @@
             $table->id();
             $table->foreignId('membership_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
-            $table->enum('payment_method', ['cash', 'credit_card', 'debit_card', 'gopay', 'ovo', 'dana', 'bank_transfer']);
+            $table->enum('payment_method', ['cash', 'credit_card', 'debit_card', 'gopay', 'ovo', 'dana', 'bank_transfer', 'virtual_account']);
             $table->string('payment_gateway_id')->nullable();
-            $table->enum('status', ['pending', 'success', 'failed'])->default('pending');
+            $table->enum('status', ['pending', 'success', 'failed', 'completed'])->default('pending');
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });

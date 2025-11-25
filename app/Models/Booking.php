@@ -22,4 +22,9 @@ class Booking extends Model
     {
         return $this->belongsTo(Membership::class, 'membership_id');
     }
+
+    public function user()
+    {
+        return $this->hasOneThrough(User::class, Membership::class, 'id', 'id', 'membership_id', 'user_id');
+    }
 }

@@ -56,7 +56,20 @@ class DashboardController extends Controller
                 ];
             });
 
-        return view('admin.dashboard', compact('stats', 'recentMemberships', 'user', 'revenue'));
+        // Recent Transactions
+        $recentTransactions = Transaction::with(['membership.user'])
+            ->whereHas('membership')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Recent Trainers
+        $recentTrainers = User::where('role', 'trainer')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('admin.dashboard', compact('stats', 'recentTransactions', 'recentTrainers', 'user', 'revenue'));
     }
 
     public function users(Request $request) 
@@ -187,19 +200,107 @@ class DashboardController extends Controller
 
         $user = auth()->user();
         
-        $query = Membership::with('user');
+        // Build the transactions query with proper relationships
+        $query = Transaction::with(['membership.user']);
         
+        // Apply search filter
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
-            $query->whereHas('user', function($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('email', 'like', "%{$searchTerm}%");
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('payment_gateway_id', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('membership.user', function($subQuery) use ($searchTerm) {
+                      $subQuery->where('name', 'like', "%{$searchTerm}%")
+                               ->orWhere('email', 'like', "%{$searchTerm}%");
+                  });
             });
         }
-        
+
+        // Apply status filter
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+
+        // Apply payment method filter
+        if ($request->has('payment_method') && !empty($request->payment_method)) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Get paginated transactions
         $transactions = $query->latest()->paginate(10);
 
-        return view('admin.transactions', compact('user', 'transactions'));
+        // Calculate statistics
+        $stats = [
+            'total' => Transaction::count(),
+            'completed' => Transaction::whereIn('status', ['completed', 'success'])->count(),
+            'pending' => Transaction::where('status', 'pending')->count(),
+            'failed' => Transaction::where('status', 'failed')->count(),
+            'total_amount' => Transaction::whereIn('status', ['completed', 'success'])->sum('amount')
+        ];
+
+        return view('admin.transactions', compact('user', 'transactions', 'stats'));
+    }
+
+    public function userDetail($id)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized access for admin only.');
+        }
+
+        $user = auth()->user();
+        
+        // Get customer with membership data
+        $customer = User::with(['membership', 'userProgress'])
+            ->where('role', 'customer')
+            ->findOrFail($id);
+
+        // Get customer's transaction history
+        $transactions = Transaction::whereHas('membership', function($query) use ($id) {
+                $query->where('user_id', $id);
+            })
+            ->with('membership')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Get recent bookings through membership
+        $recentBookings = Booking::whereHas('membership', function($query) use ($id) {
+                $query->where('user_id', $id);
+            })
+            ->with(['trainer', 'membership'])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('admin.user-detail', compact('user', 'customer', 'transactions', 'recentBookings'));
+    }
+
+    public function trainerDetail($id)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized access for admin only.');
+        }
+
+        $user = auth()->user();
+        
+        // Get trainer data
+        $trainer = User::where('role', 'trainer')
+            ->findOrFail($id);
+
+        // Get classes handled by this trainer
+        $classes = GymClass::where('trainer_id', $id)
+            ->with('members')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Get trainer's recent bookings
+        $recentActivities = Booking::where('trainer_id', $id)
+            ->with(['membership.user'])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('admin.trainer-detail', compact('user', 'trainer', 'classes', 'recentActivities'));
     }
 
     private function getEquipmentStats()
@@ -233,7 +334,7 @@ class DashboardController extends Controller
 
     private function getMonthlyRevenue()
     {
-        return Transaction::where('status', 'completed')
+        return Transaction::whereIn('status', ['completed', 'success'])
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('amount');
@@ -241,6 +342,6 @@ class DashboardController extends Controller
 
     private function getTotalRevenue()
     {
-        return Transaction::where('status', 'completed')->sum('amount');
+        return Transaction::whereIn('status', ['completed', 'success'])->sum('amount');
     }
 }

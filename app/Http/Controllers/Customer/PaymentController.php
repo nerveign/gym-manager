@@ -6,502 +6,607 @@ use App\Http\Controllers\Controller;
 use App\Models\Membership;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Midtrans\Config;
-use Midtrans\Snap;
-use Midtrans\Transaction as MidtransTransaction;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class PaymentController extends Controller
 {
-    public function __construct()
-    {
-        // Require Midtrans library manually
-        require_once base_path('midtrans-php-master/Midtrans.php');
-        
-        // Set Midtrans configuration - use config() instead of env() for consistency
-        \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-        \Midtrans\Config::$clientKey = config('services.midtrans.client_key');
-        \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
-        \Midtrans\Config::$isSanitized = config('services.midtrans.is_sanitized');
-        \Midtrans\Config::$is3ds = config('services.midtrans.is_3ds');
-        
-        // Debug logging untuk memastikan config ter-load
-        \Log::info('Midtrans Config Loaded', [
-            'server_key_set' => !empty(\Midtrans\Config::$serverKey),
-            'client_key_set' => !empty(\Midtrans\Config::$clientKey),
-            'is_production' => \Midtrans\Config::$isProduction
-        ]);
-    }
+    // Constants untuk magic numbers
+    const MEMBERSHIP_PRICE = 200000;
+    const MEMBERSHIP_DURATION_DAYS = 30;
+
     /**
-     * Tampilkan halaman payment untuk aktivasi membership
+     * Show payment page
      */
     public function show()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         
-        // Pastikan user adalah customer
+        // Validasi user permissions
         if (!$user->isCustomer()) {
             abort(403, 'Access denied. Customer only.');
         }
         
-        // Jika sudah memiliki membership aktif DAN tidak ada session payment yang sedang berlangsung
-        // maka redirect ke dashboard
-        if ($user->hasActiveMembership() && !session()->has('transaction_id')) {
+        // Check existing active membership
+        if ($user->hasActiveMembership()) {
             return redirect()->route('customer.dashboard')
                            ->with('info', 'You already have an active membership.');
         }
         
-        // Data untuk payment
-        $paymentData = [
-            'user' => $user,
-            'amount' => 200000, // Harga membership Rp 200.000
-            'duration' => 30, // 30 hari
-            'description' => 'Aktivasi Membership Gym - 30 Hari'
-        ];
+        $membership = $user->membership;
         
-        return view('customer.payment.show', $paymentData);
-    }
-    
-    /**
-     * Proses pembayaran membership
-     */
-    public function process(Request $request)
-    {
-        $user = auth()->user();
-        
-        // Validasi input
-        $request->validate([
-            'payment_method' => 'required|in:midtrans,manual',
-        ]);
-        
-        // Pastikan user adalah customer dan belum memiliki membership aktif
-        if (!$user->isCustomer() || $user->hasActiveMembership()) {
+        if (!$membership || $membership->status === 'active') {
             return redirect()->route('customer.dashboard')
-                           ->with('error', 'Invalid payment request.');
+                ->with('info', 'Your membership is already active.');
         }
 
-        $paymentMethod = $request->input('payment_method');
-
-        if ($paymentMethod === 'midtrans') {
-            return $this->processMidtrans($user);
-        } else {
-            return $this->processManual($user);
-        }
-    }
-
-    /**
-     * Process payment with Midtrans
-     */
-    private function processMidtrans($user)
-    {
-        try {
-            // Generate unique order ID
-            $orderId = 'MEMBERSHIP-' . $user->id . '-' . time();
-            $amount = 200000; // Rp 200.000
-            
-            \Log::info('Processing Midtrans payment for user: ' . $user->id);
-            
-            // Parameter untuk Midtrans
-            $params = array(
-                'transaction_details' => array(
-                    'order_id' => $orderId,
-                    'gross_amount' => $amount,
-                ),
-                'customer_details' => array(
-                    'first_name' => explode(' ', $user->name)[0],
-                    'last_name' => implode(' ', array_slice(explode(' ', $user->name), 1)) ?: '',
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'billing_address' => array(
-                        'address' => $user->address,
-                    ),
-                ),
-                'item_details' => array(
-                    array(
-                        'id' => 'MEMBERSHIP-30D',
-                        'price' => $amount,
-                        'quantity' => 1,
-                        'name' => 'Membership Gym - 30 Hari'
-                    )
-                ),
-            );
-
-            \Log::info('Midtrans params: ' . json_encode($params));
-            
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
-            
-            \Log::info('Snap token generated successfully: ' . $snapToken);
-            
-            // Test apakah snapToken valid
-            if (empty($snapToken)) {
-                throw new \Exception('Snap token is empty');
-            }
-
-            // Pastikan user memiliki membership atau buat membership baru
-            $membership = $user->membership;
-            if (!$membership) {
-                $membership = Membership::create([
-                    'user_id' => $user->id,
-                    'start_time' => null,
-                    'end_time' => null,
-                    'status' => 'inactive',
-                    'total_amount' => $amount,
-                    'payment_status' => 'pending'
-                ]);
-            }
-
-            // Buat transaksi pending terlebih dahulu
-            $transaction = Transaction::create([
-                'membership_id' => $membership->id,
-                'amount' => $amount,
-                'payment_method' => 'midtrans',
-                'payment_gateway_id' => $orderId,
-                'status' => 'pending',
-                'paid_at' => null
-            ]);
-
-            \Log::info('Transaction created with ID: ' . $transaction->id);
-
-            // Store transaction ID in session for later use
-            session(['transaction_id' => $transaction->id]);
-
-            return view('customer.payment.midtrans', compact('snapToken', 'transaction'));
-
-        } catch (\Exception $e) {
-            \Log::error('Midtrans payment error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
-            return redirect()->back()
-                           ->with('error', 'Payment failed. Please try again: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Process manual payment (for testing)
-     */
-    private function processManual($user)
-    {
-        try {
-            DB::beginTransaction();
-            
-            // Buat atau update membership - UNTUK MANUAL: langsung active
-            $membership = Membership::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'start_time' => now(),
-                    'end_time' => now()->addDays(30),
-                    'status' => 'active',
-                    'total_amount' => 200000,
-                    'payment_status' => 'paid'
-                ]
-            );
-            
-            // Buat record transaksi
-            $transaction = Transaction::create([
-                'membership_id' => $membership->id,
-                'amount' => 200000,
-                'payment_method' => 'manual',
-                'payment_gateway_id' => 'MANUAL-' . time() . '-' . $user->id,
-                'status' => 'completed',
-                'paid_at' => now()
-            ]);
-            
-            DB::commit();
-            
-            // Untuk manual payment, langsung redirect ke dashboard karena sudah active
-            return redirect()->route('customer.dashboard')
-                           ->with('success', 'Payment successful! Your membership is now active.');
-                           
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return redirect()->back()
-                           ->with('error', 'Payment failed. Please try again.')
-                           ->withInput();
-        }
-    }
-    
-    /**
-     * Halaman sukses pembayaran - STRICT VALIDATION
-     */
-    public function success(Request $request)
-    {
-        $user = auth()->user();
-        $transactionId = $request->get('transaction_id');
-        $orderId = $request->get('order_id');
-        
-        \Log::info('Payment success page accessed', [
-            'user_id' => $user->id,
-            'transaction_id' => $transactionId,
-            'order_id' => $orderId,
-            'url' => $request->fullUrl()
-        ]);
-        
-        // STRICT VALIDATION: Only allow if transaction is actually completed
-        if (!$transactionId && !$orderId) {
-            \Log::warning('Success page accessed without transaction_id or order_id', [
-                'user_id' => $user->id
-            ]);
-            
-            return redirect()->route('customer.payment.show')
-                           ->with('error', 'Invalid payment access. Please complete payment first.');
-        }
-        
-        $transaction = null;
-        
-        // Try to find by transaction_id first, then by order_id
-        if ($transactionId) {
-            $transaction = Transaction::find($transactionId);
-        } elseif ($orderId) {
-            $transaction = Transaction::where('payment_gateway_id', $orderId)->first();
-        }
-        
-        if (!$transaction || 
-            !$transaction->membership || 
-            $transaction->membership->user_id !== $user->id) {
-            
-            \Log::warning('Invalid transaction access attempt', [
-                'user_id' => $user->id,
-                'transaction_id' => $transactionId
-            ]);
-            
-            return redirect()->route('customer.payment.show')
-                           ->with('error', 'Transaction not found or unauthorized access.');
-        }
-        
-        // STRICT CHECK: Only allow success page if transaction is completed
-        if ($transaction->status !== 'completed') {
-            \Log::warning('Success page accessed for non-completed transaction', [
-                'user_id' => $user->id,
-                'transaction_id' => $transactionId,
-                'transaction_status' => $transaction->status
-            ]);
-            
-            return redirect()->route('customer.payment.show')
-                           ->with('error', 'Payment has not been completed yet. Please wait for confirmation.');
-        }
-        
-        // Get membership
-        $membership = $transaction->membership->fresh();
-        
-        \Log::info('Valid success page access', [
-            'user_id' => $user->id,
-            'transaction_id' => $transactionId,
-            'membership_id' => $membership->id,
-            'membership_status' => $membership->status
-        ]);
-        
-        return view('customer.payment.success', [
+        return view('customer.payment.show', [
             'user' => $user,
             'membership' => $membership,
-            'transaction' => $transaction
+            'amount' => self::MEMBERSHIP_PRICE,
+            'duration' => self::MEMBERSHIP_DURATION_DAYS,
+            'description' => 'Gym Membership - 30 Days Access'
         ]);
     }
 
     /**
-     * Verify payment status with Midtrans before allowing success page
+     * Create payment order - IMPROVED VERSION WITH BETTER DOOVERA INTEGRATION
      */
-    public function verifyPayment(Request $request)
+    public function createOrder(Request $request)
     {
-        $orderId = $request->input('order_id');
-        
-        if (!$orderId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order ID is required'
-            ], 400);
-        }
-        
         try {
-            // Configure Midtrans
-            \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-            \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
+            $user = Auth::user();
+            Log::info('Starting payment creation', ['user_id' => $user->id]);
             
-            // Get transaction status from Midtrans
-            $status = MidtransTransaction::status($orderId);
+            // Get membership
+            $membership = $user->membership;
+            if (!$membership) {
+                Log::error('No membership found for user', ['user_id' => $user->id]);
+                return response()->json(['error' => 'No membership found'], 404);
+            }
             
-            \Log::info('Midtrans status check', [
-                'order_id' => $orderId,
-                'status' => $status
+            // Generate unique order ID with proper format
+            $timestamp = time();
+            $orderId = 'GYM-' . str_pad($user->id, 6, '0', STR_PAD_LEFT) . '-' . $timestamp;
+            
+            // Prepare API credentials
+            $apiKey = config('services.payment.api_key');
+            $baseUrl = config('services.payment.base_url');
+            
+            Log::info('Doovera API Configuration', [
+                'api_key_present' => !empty($apiKey),
+                'api_key_length' => strlen($apiKey ?? ''),
+                'base_url' => $baseUrl,
+                'order_id' => $orderId
             ]);
             
-            // Check if payment is actually successful
-            if (in_array($status->transaction_status, ['capture', 'settlement'])) {
+            // Prepare request data sesuai dokumentasi Doovera
+            $requestData = [
+                'external_id' => $orderId,
+                'amount' => self::MEMBERSHIP_PRICE,
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
+                'description' => 'Payment for Order #' . $orderId,
+                'expired_duration' => (int)config('services.payment.expired_hours', 24), // dalam jam sesuai dokumentasi
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'product' => 'Premium Package'
+                ]
+            ];
+            
+            Log::info('Request data prepared', $requestData);
+            
+            // Gunakan endpoint yang benar sesuai dokumentasi
+            $correctEndpoint = '/virtual-account/create';
+            
+            try {
+                Log::info('Attempting correct endpoint from documentation', ['endpoint' => $correctEndpoint]);
                 
-                // Find the transaction and activate membership
-                $transaction = Transaction::where('payment_gateway_id', $orderId)->first();
+                $response = Http::timeout(15)->withHeaders([
+                    'X-API-KEY' => $apiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
+                ])->post($baseUrl . $correctEndpoint, $requestData);
                 
-                if ($transaction && $transaction->status !== 'completed') {
-                    // Activate membership if not already activated
-                    $this->activateMembership($transaction, $transaction->membership);
+                Log::info('Correct endpoint response', [
+                    'status' => $response->status(),
+                    'headers' => $response->headers(),
+                    'body' => $response->body()
+                ]);
+                
+                if ($response->successful()) {
+                    $responseData = $response->json();
                     
-                    \Log::info('Membership activated through verify payment', [
+                    // Extract VA number sesuai format response dokumentasi
+                    $vaNumber = $responseData['data']['va_number'] ?? null;
+                    
+                    if (!$vaNumber) {
+                        Log::error('VA number not found in correct response format', [
+                            'response_data' => $responseData
+                        ]);
+                        // Fallback jika format response berbeda
+                        $vaNumber = '880000' . str_pad($user->id, 6, '0', STR_PAD_LEFT) . ($timestamp % 10000);
+                    }
+                    
+                    // Create transaction record
+                    $transaction = Transaction::create([
+                        'membership_id' => $membership->id,
+                        'amount' => self::MEMBERSHIP_PRICE,
+                        'payment_method' => 'bank_transfer',
+                        'status' => 'pending',
+                        'payment_gateway_id' => $vaNumber
+                    ]);
+                    
+                    Log::info('Transaction created successfully with correct API', [
                         'transaction_id' => $transaction->id,
-                        'order_id' => $orderId
+                        'va_number' => $vaNumber
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'va_number' => $vaNumber,
+                        'amount' => self::MEMBERSHIP_PRICE,
+                        'transaction_id' => $transaction->id,
+                        'endpoint_used' => $correctEndpoint,
+                        'doovera_response' => $responseData,
+                        'payment_url' => $responseData['data']['payment_url'] ?? null
                     ]);
                 }
                 
-                return response()->json([
-                    'success' => true,
-                    'payment_verified' => true,
-                    'transaction_status' => $status->transaction_status,
-                    'message' => 'Payment verified and membership activated'
-                ]);
-            } else {
-                return response()->json([
-                    'success' => true,
-                    'payment_verified' => false,
-                    'transaction_status' => $status->transaction_status,
-                    'message' => 'Payment not completed yet'
+            } catch (\Exception $e) {
+                Log::error('Correct endpoint failed', [
+                    'endpoint' => $correctEndpoint,
+                    'error' => $e->getMessage()
                 ]);
             }
             
-        } catch (\Exception $e) {
-            \Log::error('Error verifying payment status: ' . $e->getMessage());
+            // Fallback: Coba endpoint alternatif jika endpoint utama gagal
+            $fallbackEndpoints = ['/virtual-accounts', '/create', '/payment/create'];
+            
+            foreach ($fallbackEndpoints as $endpoint) {
+                try {
+                    Log::info('Trying fallback endpoint', ['endpoint' => $endpoint]);
+                    
+                    $response = Http::timeout(10)->withHeaders([
+                        'X-API-KEY' => $apiKey,
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json'
+                    ])->post($baseUrl . $endpoint, $requestData);
+                    
+                    Log::info('Fallback endpoint response', [
+                        'endpoint' => $endpoint,
+                        'status' => $response->status(),
+                        'body' => $response->body()
+                    ]);
+                    
+                    if ($response->successful()) {
+                        $responseData = $response->json();
+                        $vaNumber = $responseData['data']['va_number'] ?? $responseData['va_number'] ?? $orderId;
+                        
+                        $transaction = Transaction::create([
+                            'membership_id' => $membership->id,
+                            'amount' => self::MEMBERSHIP_PRICE,
+                            'payment_method' => 'bank_transfer',
+                            'status' => 'pending',
+                            'payment_gateway_id' => $vaNumber
+                        ]);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'va_number' => $vaNumber,
+                            'amount' => self::MEMBERSHIP_PRICE,
+                            'transaction_id' => $transaction->id,
+                            'endpoint_used' => $endpoint,
+                            'doovera_response' => $responseData
+                        ]);
+                    }
+                    
+                } catch (\Exception $e) {
+                    Log::warning('Fallback endpoint error', [
+                        'endpoint' => $endpoint,
+                        'error' => $e->getMessage()
+                    ]);
+                    continue;
+                }
+            }
+            
+            // Last resort: Create local VA for development testing
+            Log::warning('All Doovera endpoints failed, creating local VA for testing');
+            
+            $localVaNumber = '880000' . str_pad($user->id, 6, '0', STR_PAD_LEFT) . ($timestamp % 10000);
+            
+            $transaction = Transaction::create([
+                'membership_id' => $membership->id,
+                'amount' => self::MEMBERSHIP_PRICE,
+                'payment_method' => 'bank_transfer',
+                'status' => 'pending',
+                'payment_gateway_id' => $localVaNumber
+            ]);
             
             return response()->json([
-                'success' => false,
-                'message' => 'Error verifying payment status'
+                'success' => true,
+                'va_number' => $localVaNumber,
+                'amount' => self::MEMBERSHIP_PRICE,
+                'transaction_id' => $transaction->id,
+                'note' => 'Created local VA - Doovera API unavailable'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payment creation failed completely', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Payment system temporarily unavailable. Please try again later.'
             ], 500);
         }
     }
 
-    public function activateNow(Request $request)
+    /**
+     * Verify payment status
+     */
+    public function verifyPayment(Request $request)
     {
-        $user = auth()->user();
-        $transactionId = $request->get('transaction_id');
-        
         try {
-            DB::beginTransaction();
+            $request->validate(['va_number' => 'required|string']);
             
-            if ($transactionId) {
-                $transaction = Transaction::find($transactionId);
-                if ($transaction && $transaction->status === 'pending') {
-                    $transaction->update([
-                        'status' => 'completed',
-                        'paid_at' => now()
-                    ]);
-                }
+            Log::info('Verifying payment', ['va_number' => $request->va_number]);
+            
+            $transaction = Transaction::where('payment_gateway_id', $request->va_number)->first();
+            
+            if (!$transaction) {
+                Log::error('Transaction not found', ['va_number' => $request->va_number]);
+                return response()->json(['error' => 'Transaction not found'], 404);
             }
             
-            // Update membership jadi active
-            $membership = $user->membership;
-            if ($membership) {
-                $membership->update([
-                    'status' => 'active',
-                    'payment_status' => 'paid',
-                    'start_time' => now(),
-                    'end_time' => now()->addDays(30),
+            Log::info('Transaction found for verification', [
+                'transaction_id' => $transaction->id,
+                'current_status' => $transaction->status
+            ]);
+
+            // Check if already processed 
+            if ($transaction->status === 'success') {
+                Log::info('Transaction already processed as success', ['transaction_id' => $transaction->id]);
+                
+                return response()->json([
+                    'success' => true,
+                    'status' => 'success',
+                    'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
                 ]);
             }
             
-            DB::commit();
+            // Check payment status dengan Doovera API menggunakan endpoint yang benar
+            try {
+                // Gunakan endpoint sesuai dokumentasi: /virtual-account/{va_number}/status
+                $statusEndpoint = '/virtual-account/' . $request->va_number . '/status';
+                $apiUrl = config('services.payment.base_url') . $statusEndpoint;
+                
+                Log::info('Checking payment status with correct endpoint', [
+                    'va_number' => $request->va_number,
+                    'endpoint' => $statusEndpoint,
+                    'full_url' => $apiUrl
+                ]);
+                
+                $checkResponse = Http::timeout(15)->withHeaders([
+                    'X-API-KEY' => config('services.payment.api_key'),
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
+                ])->get($apiUrl);
+
+                Log::info('Doovera status check response', [
+                    'status_code' => $checkResponse->status(),
+                    'response_body' => $checkResponse->body()
+                ]);
+
+                if ($checkResponse->successful()) {
+                    $checkData = $checkResponse->json();
+                    Log::info('Payment status parsed from Doovera', ['response' => $checkData]);
+                    
+                    // Periksa status sesuai format response dokumentasi
+                    $paymentStatus = $checkData['data']['status'] ?? 'pending';
+                    
+                    // Check multiple paid status variations
+                    $isPaid = in_array(strtolower($paymentStatus), ['paid', 'success', 'completed', 'settlement']);
+                    
+                    if ($isPaid) {
+                        Log::info('Payment confirmed as PAID in Doovera', [
+                            'doovera_status' => $paymentStatus,
+                            'va_number' => $request->va_number
+                        ]);
+                        
+                        // Update transaction ke success
+                        $transaction->update([
+                            'status' => 'success',
+                            'paid_at' => now(),
+                            'payment_data' => json_encode($checkData) // Store full response
+                        ]);
+                        
+                        // Activate membership
+                        $this->activateMembership($transaction->membership);
+                        
+                        Log::info('Payment confirmed via API check - transaction updated', [
+                            'transaction_id' => $transaction->id,
+                            'doovera_status' => $checkData['data']['status']
+                        ]);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'status' => 'success',
+                            'message' => 'Payment successful! Your membership has been activated.',
+                            'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
+                        ]);
+                        
+                    } else {
+                        Log::info('Payment still pending in Doovera API', [
+                            'doovera_status' => $checkData['data']['status'] ?? 'unknown'
+                        ]);
+                    }
+                    
+                } else {
+                    Log::warning('Doovera API request failed', [
+                        'status_code' => $checkResponse->status(),
+                        'response_body' => $checkResponse->body()
+                    ]);
+                }
+                
+            } catch (\Exception $e) {
+                Log::error('Error checking payment with Doovera API', [
+                    'error' => $e->getMessage(),
+                    'va_number' => $request->va_number,
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
             
-            return redirect()->route('customer.payment.success', ['transaction_id' => $transactionId])
-                           ->with('success', 'Membership activated successfully!');
-                           
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to activate membership: ' . $e->getMessage());
-        }
-    }
-    
-    /**
-     * Handle Midtrans Payment Callback
-     */
-    public function midtransCallback(Request $request)
-    {
-        try {
-            // Get the notification
-            $notification = new \Midtrans\Notification();
-            
-            $transactionStatus = $notification->transaction_status;
-            $paymentType = $notification->payment_type;
-            $orderId = $notification->order_id;
-            $fraudStatus = $notification->fraud_status;
-            
-            \Log::info('Midtrans callback received', [
-                'order_id' => $orderId,
-                'transaction_status' => $transactionStatus,
-                'payment_type' => $paymentType,
-                'fraud_status' => $fraudStatus
+            // Return current status (pending) - wait for webhook notification
+            Log::info('Transaction still pending - waiting for Doovera webhook notification', [
+                'transaction_id' => $transaction->id,
+                'status' => $transaction->status
             ]);
             
-            // Find transaction by payment_gateway_id (order_id)
-            $transaction = Transaction::where('payment_gateway_id', $orderId)->first();
+            return response()->json([
+                'success' => false,
+                'status' => $transaction->status,
+                'message' => 'Payment is still pending. Please complete payment in Doovera dashboard.',
+                'payment_url' => "https://payment-dummy.doovera.com/pay/" . $request->va_number
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payment verification error: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Verification failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Webhook handler for payment notifications from Doovera
+     */
+    public function webhook(Request $request)
+    {
+        try {
+            Log::info('Payment webhook received from Doovera', [
+                'payload' => $request->all(),
+                'headers' => $request->headers->all()
+            ]);
+            
+            // Verify webhook signature untuk keamanan
+            $receivedSignature = $request->header('X-Signature');
+            $payload = $request->getContent();
+            $expectedSignature = hash_hmac('sha256', $payload, config('services.payment.webhook_secret'));
+            
+            // Allow manual test bypass
+            $isManualTest = $receivedSignature === 'manual_test';
+            
+            if (!$isManualTest && $receivedSignature !== $expectedSignature) {
+                Log::error('Webhook signature verification failed', [
+                    'received' => $receivedSignature,
+                    'expected' => $expectedSignature
+                ]);
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+            
+            if ($isManualTest) {
+                Log::info('Manual test webhook detected - bypassing signature verification');
+            }
+            
+            // Extract payment data from webhook
+            $externalId = $request->input('external_id');
+            $status = $request->input('status');
+            $vaNumber = $request->input('va_number');
+            $amount = $request->input('amount');
+            
+            if (!$externalId || !$status) {
+                Log::error('Webhook missing required fields', [
+                    'external_id' => $externalId,
+                    'status' => $status
+                ]);
+                return response()->json(['error' => 'Missing required fields'], 400);
+            }
+            
+            // Find transaction by external_id or va_number
+            $transaction = Transaction::where('payment_gateway_id', $externalId)
+                ->orWhere('payment_gateway_id', $vaNumber)
+                ->first();
             
             if (!$transaction) {
-                \Log::error('Transaction not found for order_id: ' . $orderId);
-                return response()->json(['status' => 'error', 'message' => 'Transaction not found'], 404);
+                Log::error('Transaction not found for webhook', [
+                    'external_id' => $externalId,
+                    'va_number' => $vaNumber
+                ]);
+                return response()->json(['error' => 'Transaction not found'], 404);
             }
             
-            $membership = $transaction->membership;
+            Log::info('Processing webhook for transaction', [
+                'transaction_id' => $transaction->id,
+                'current_status' => $transaction->status,
+                'webhook_status' => $status
+            ]);
             
-            if ($transactionStatus == 'capture') {
-                if ($paymentType == 'credit_card') {
-                    if ($fraudStatus == 'challenge') {
-                        // Handle challenge status
-                        $transaction->update(['status' => 'pending']);
-                    } else if ($fraudStatus == 'accept') {
-                        // Payment success
-                        $this->activateMembership($transaction, $membership);
-                    }
-                }
-            } else if ($transactionStatus == 'settlement') {
-                // Payment success
-                $this->activateMembership($transaction, $membership);
-            } else if ($transactionStatus == 'pending') {
-                // Payment pending
-                $transaction->update(['status' => 'pending']);
-            } else if ($transactionStatus == 'deny') {
-                // Payment denied
-                $transaction->update(['status' => 'failed']);
-            } else if ($transactionStatus == 'expire') {
-                // Payment expired
-                $transaction->update(['status' => 'expired']);
-            } else if ($transactionStatus == 'cancel') {
-                // Payment cancelled
-                $transaction->update(['status' => 'cancelled']);
+            // Process payment status dari Doovera
+            if ($status === 'paid' || $status === 'success' || $status === 'completed') {
+                // Update transaction ke success
+                $transaction->update([
+                    'status' => 'success',
+                    'paid_at' => now()
+                ]);
+                
+                Log::info('Transaction updated to success via webhook', [
+                    'transaction_id' => $transaction->id,
+                    'webhook_status' => $status
+                ]);
+                
+                // Activate membership
+                $this->activateMembership($transaction->membership);
+                
+                Log::info('Membership activated via webhook', [
+                    'membership_id' => $transaction->membership_id,
+                    'user_id' => $transaction->membership->user_id
+                ]);
+                
+            } else {
+                Log::info('Webhook received but payment not completed', [
+                    'transaction_id' => $transaction->id,
+                    'status' => $status
+                ]);
             }
             
-            return response()->json(['status' => 'success'], 200);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Webhook processed successfully'
+            ]);
             
         } catch (\Exception $e) {
-            \Log::error('Midtrans callback error: ' . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            Log::error('Webhook processing error: ' . $e->getMessage(), [
+                'payload' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Webhook failed'], 500);
         }
     }
-    
+
     /**
-     * Helper method to activate membership
+     * Payment success page
      */
-    private function activateMembership($transaction, $membership)
+    public function success(Request $request)
     {
-        DB::beginTransaction();
+        $transactionId = $request->query('transaction_id');
+        
+        if (!$transactionId) {
+            return redirect()->route('customer.dashboard')
+                ->with('error', 'Invalid transaction.');
+        }
+
+        $transaction = Transaction::with('membership.user')
+            ->where('id', $transactionId)
+            ->where('status', 'success')
+            ->first();
+
+        if (!$transaction || $transaction->membership->user_id !== auth()->id()) {
+            Log::error('Transaction access denied', [
+                'transaction_id' => $transactionId,
+                'user_id' => auth()->id()
+            ]);
+            return redirect()->route('customer.dashboard')
+                ->with('error', 'Transaction not found or payment not verified.');
+        }
+
+        return view('customer.payment.success', [
+            'transaction' => $transaction,
+            'membership' => $transaction->membership,
+            'user' => auth()->user()
+        ]);
+    }
+
+    /**
+     * Simulate payment success for testing purposes
+     * HANYA UNTUK DEVELOPMENT - HAPUS DI PRODUCTION
+     */
+    public function simulatePaymentSuccess($vaNumber)
+    {
         try {
-            // Update membership to active
-            $membership->update([
-                'status' => 'active',
-                'payment_status' => 'paid',
-                'start_time' => now(),
-                'end_time' => now()->addDays(30),
-            ]);
+            // Only allow in development environment
+            if (!app()->environment(['local', 'development', 'testing'])) {
+                abort(403, 'Payment simulation only available in development');
+            }
+
+            Log::info('Manual payment simulation started', ['va_number' => $vaNumber]);
             
-            // Update transaction to completed
+            $transaction = Transaction::where('payment_gateway_id', $vaNumber)->first();
+            
+            if (!$transaction) {
+                return response()->json(['error' => 'Transaction not found'], 404);
+            }
+            
+            // Check if already processed 
+            if ($transaction->status === 'success') {
+                return response()->json([
+                    'success' => true,
+                    'status' => 'already_processed',
+                    'message' => 'Payment already processed',
+                    'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
+                ]);
+            }
+            
+            // Simulate payment success
             $transaction->update([
-                'status' => 'completed',
-                'paid_at' => now()
+                'status' => 'success',
+                'paid_at' => now(),
+                'payment_data' => json_encode([
+                    'simulated' => true,
+                    'simulation_time' => now()->toISOString(),
+                    'va_number' => $vaNumber,
+                    'amount' => $transaction->amount
+                ])
             ]);
             
-            DB::commit();
-            \Log::info('Membership activated via callback for transaction: ' . $transaction->id);
+            // Activate membership
+            $this->activateMembership($transaction->membership);
+            
+            Log::info('Payment simulated successfully', [
+                'transaction_id' => $transaction->id,
+                'va_number' => $vaNumber
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'message' => 'Payment simulation successful! Membership activated.',
+                'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
+            ]);
             
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Failed to activate membership via callback: ' . $e->getMessage());
-            throw $e;
+            Log::error('Payment simulation failed', [
+                'va_number' => $vaNumber,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Simulation failed: ' . $e->getMessage()
+            ], 500);
         }
     }
-    
+
+    /**
+     * Private helper methods
+     */
+    private function activateMembership(Membership $membership): void
+    {
+        $membership->update([
+            'status' => 'active',
+            'payment_status' => 'paid',
+            'start_time' => now(),
+            'end_time' => now()->addDays(self::MEMBERSHIP_DURATION_DAYS)
+        ]);
+        
+        Log::info("Membership activated for user: {$membership->user_id}", [
+            'membership_id' => $membership->id,
+            'start_time' => $membership->start_time,
+            'end_time' => $membership->end_time
+        ]);
+    }
 }

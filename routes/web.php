@@ -9,6 +9,8 @@ use App\Http\Controllers\Customer\CustomerBookingController;
 use App\Http\Controllers\Customer\PaymentController as CustomerPaymentController;
 // ===================================
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\Membership;
 use App\Models\Transaction;
@@ -47,15 +49,15 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/users', [AdminDashboardController::class, 'users'])->name('users_management');
     Route::get('/dashboard/trainer', [AdminDashboardController::class, 'trainers'])->name('trainers_management');
     Route::get('/dashboard/booking', [AdminDashboardController::class, 'bookings'])->name('bookings_management');
-    Route::get('/dashboard/class', [AdminDashboardController::class, 'classes'])->name('classes_management');
+    Route::get('/dashboard/classes', [AdminDashboardController::class, 'classes'])->name('classes_management');
     
-    // Transaction Routes
-    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
-    Route::get('/transactions/{id}', [AdminTransactionController::class, 'show'])->name('transactions.show');
-    Route::put('/transactions/{id}/status', [AdminTransactionController::class, 'updateStatus'])->name('transactions.updateStatus');
-    Route::delete('/transactions/{id}', [AdminTransactionController::class, 'destroy'])->name('transactions.destroy');
+    // Detail Pages Routes
+    // Detail Routes
+    Route::get('/users/{id}', [AdminDashboardController::class, 'userDetail'])->name('user.detail');
+    Route::get('/trainers/{id}', [AdminDashboardController::class, 'trainerDetail'])->name('trainer.detail');
+    
     Route::get('/dashboard/equipment', [AdminDashboardController::class, 'equipments'])->name('equipments_management');
-    Route::get('/dashboard/transaction', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
+    Route::get('/dashboard/transactions', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
 });
 
 
@@ -77,15 +79,22 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
     Route::resource('bookings', CustomerBookingController::class);
     // =====================================
 
-        // PAYMENT ROUTES untuk aktivasi membership
+    // PAYMENT ROUTES untuk aktivasi membership
     Route::prefix('payment')->name('payment.')->group(function () {
         Route::get('/', [CustomerPaymentController::class, 'show'])->name('show');
-        Route::post('/process', [CustomerPaymentController::class, 'process'])->name('process');
-        Route::get('/success', [CustomerPaymentController::class, 'success'])->name('success');
+        Route::post('/create-order', [CustomerPaymentController::class, 'createOrder'])->name('create-order');
         Route::post('/verify', [CustomerPaymentController::class, 'verifyPayment'])->name('verify');
-        Route::post('/activate', [CustomerPaymentController::class, 'activateNow'])->name('activate');
+        Route::get('/success', [CustomerPaymentController::class, 'success'])->name('success');
+        Route::post('/activate', [CustomerPaymentController::class, 'verifyPayment'])->name('activate');
+        Route::get('/simulator', function () {
+            return view('customer.payment.manual-simulator');
+        })->name('simulator');
+        
+        // Payment simulator untuk development testing
+        Route::post('/simulate-success/{va_number}', [CustomerPaymentController::class, 'simulatePaymentSuccess'])
+            ->name('simulate-success')
+            ->where('va_number', '[0-9]+');
     });
-
 });
 
 
@@ -96,6 +105,15 @@ Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')
     })->name('dashboard');
 });
 
+// Webhook route (outside auth middleware)
+Route::post('/webhook/payment', [CustomerPaymentController::class, 'webhook'])->name('payment.webhook');
+
+// Essential membership checking route  
+Route::middleware('auth')->group(function () {
+    // Membership force check (for payment page compatibility)
+    Route::get('/membership/force-check', [App\Http\Controllers\Customer\MembershipCheckController::class, 'forceCheck'])
+         ->name('membership.force-check');
+});
 
 // PROFILE ROUTES (Shared)
 Route::middleware('auth')->group(function () {
