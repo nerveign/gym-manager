@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Equipment extends Model
@@ -9,6 +10,7 @@ class Equipment extends Model
         'equipment_name',
         'brand',
         'condition',
+        'quantity',
         'image_url',
         'description',
     ];

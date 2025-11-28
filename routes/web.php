@@ -7,6 +7,7 @@ use App\Http\Controllers\Customer\CustomerProgressController;
 // === TAMBAHKAN CONTROLLER BOOKING ===
 use App\Http\Controllers\Customer\CustomerBookingController;
 use App\Http\Controllers\Customer\PaymentController as CustomerPaymentController;
+use App\Http\Controllers\Admin\EquipmentController;
 // ===================================
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -50,13 +51,22 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/trainer', [AdminDashboardController::class, 'trainers'])->name('trainers_management');
     Route::get('/dashboard/booking', [AdminDashboardController::class, 'bookings'])->name('bookings_management');
     Route::get('/dashboard/classes', [AdminDashboardController::class, 'classes'])->name('classes_management');
-    
+    Route::get('/admin/equipments/{id}', [EquipmentController::class, 'show'])->name('admin.equipments.show');
+
     // Detail Pages Routes
     // Detail Routes
     Route::get('/users/{id}', [AdminDashboardController::class, 'userDetail'])->name('user.detail');
     Route::get('/trainers/{id}', [AdminDashboardController::class, 'trainerDetail'])->name('trainer.detail');
-    
+
     Route::get('/dashboard/equipment', [AdminDashboardController::class, 'equipments'])->name('equipments_management');
+    Route::get('/dashboard/equipment/create', [EquipmentController::class, 'create'])->name('equipments.create');
+    Route::post('/dashboard/equipment', [EquipmentController::class, 'store'])->name('equipments.store');
+    Route::get('/dashboard/equipment/{id}', [EquipmentController::class, 'show'])->name('equipments.show');
+
+    Route::get('/dashboard/equipment/{id}/edit', [EquipmentController::class, 'edit'])->name('equipments.edit');
+    Route::put('/dashboard/equipment/{id}', [EquipmentController::class, 'update'])->name('equipments.update');
+
+    Route::delete('/dashboard/equipment/{id}', [EquipmentController::class, 'destroy'])->name('equipments.destroy');
     Route::get('/dashboard/transactions', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
 });
 
@@ -89,7 +99,7 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
         Route::get('/simulator', function () {
             return view('customer.payment.manual-simulator');
         })->name('simulator');
-        
+
         // Payment simulator untuk development testing
         Route::post('/simulate-success/{va_number}', [CustomerPaymentController::class, 'simulatePaymentSuccess'])
             ->name('simulate-success')
@@ -112,7 +122,7 @@ Route::post('/webhook/payment', [CustomerPaymentController::class, 'webhook'])->
 Route::middleware('auth')->group(function () {
     // Membership force check (for payment page compatibility)
     Route::get('/membership/force-check', [App\Http\Controllers\Customer\MembershipCheckController::class, 'forceCheck'])
-         ->name('membership.force-check');
+        ->name('membership.force-check');
 });
 
 // PROFILE ROUTES (Shared)
@@ -122,4 +132,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
