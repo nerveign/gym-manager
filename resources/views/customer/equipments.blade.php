@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-100">
     <div class="flex h-screen">
-        {{-- Fixed Sidebar (Sidebar) --}}
+        {{-- Fixed Sidebar --}}
         <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
             <x-dashboard-header name="{{ $user->name }}" />
 
@@ -23,27 +23,28 @@
                 {{-- Nav-Item untuk Progress Tracking --}}
                 <x-nav-item text="Progress Tracking" color="text-gray-600" src="barbell.svg" location="customer.progress.index" />
 
-                {{-- === PENAMBAHAN DI SINI === --}}
-                {{-- Nav-Item untuk My Bookings (INACTIVE) --}}
-                {{-- Arahkan ke dashboard dulu karena rute booking customer belum ada --}}
+                {{-- Nav-Item untuk My Bookings --}}
                 <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" />
-                {{-- ======================== --}}
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
-                {{-- === PENAMBAHAN DI SINI === --}}
-                {{-- Nav-Item Trainer List (INACTIVE) --}}
+                {{-- Nav-Item Trainer List --}}
                 <x-nav-item text="Trainer List" color="text-gray-600" src="user.svg" location="customer.trainers.index" />
-                {{-- ======================== --}}
 
                 {{-- Nav-Item Equipment (ACTIVE) --}}
                 <x-nav-item text="Equipment List" color="text-zinc-700" src="equipment.svg" location="customer.equipments.index" style="bg-blue-50 border-r-4 border-blue-500" />
             </nav>
 
             {{-- User Profile Section --}}
-            <div class="absolute bottom-0 w-64 p-4  flex justify-between bg-white border-t"> {{-- Tambah border-t --}}
+            <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
-                    <a href="{{ route('profile.edit') }}"> {{-- Perbaiki href --}}
-                        <img class="w-8 h-8 rounded-full object-cover" src="{{ $user->image_url ?? asset('images/default-user.png') }}" alt="{{ $user->name }}">
+                    <a href="{{ route('profile.edit') }}">
+                        @if($user->image_url)
+                        <img class="w-8 h-8 rounded-full object-cover" src="{{ $user->image_url }}" alt="{{ $user->name }}">
+                        @else
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-400 text-sm"></i>
+                        </div>
+                        @endif
                     </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ $user->name }}</p>
@@ -51,105 +52,116 @@
                     </div>
                 </div>
                 <div>
-                    <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"> {{-- Ubah padding --}}
-                                <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500"> {{-- Tambah class --}}
-                            </button>
+                    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+                        @csrf
                     </form>
+                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 mr-1">
+                        <span>Logout</span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        {{-- Area Konten Utama (Main Content) --}}
+        {{-- Area Konten Utama --}}
         <div class="flex-1 ml-64">
-
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
-
-                {{-- Search Bar Dibuat Full Width (seperti screenshot) --}}
-                <div class="mb-4">
-                    <x-search-bar route="customer.equipments.index" />
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Equipment Management</h2>
                 </div>
 
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">All Equipments</h2>
+                {{-- Search Bar --}}
+                <div class="mb-6">
+                    <form method="GET" action="{{ route('customer.equipments.index') }}" class="flex gap-4">
+                        <div class="flex-1">
+                            <input type="text"
+                                name="search"
+                                value="{{ request('search') }}"
+                                placeholder="Search equipment by name or description..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Search
+                        </button>
+                        @if(request('search'))
+                        <a href="{{ route('customer.equipments.index') }}" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                            Clear
+                        </a>
+                        @endif
+                    </form>
+                </div>
 
                 {{-- Tabel Equipment --}}
-                <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
-                                <tr class="text-left text-sm text-gray-500 border-b bg-gray-50">
-                                    <th class="px-6 py-3 font-medium">Equipment</th>
-                                    <th class="px-6 py-3 font-medium">Brand</th>
-                                    <th class="px-6 py-3 font-medium">Condition</th>
-                                    <th class="px-6 py-3 font-medium">Last Maintained</th>
-                                    <th class="px-6 py-3 font-medium">Description</th>
+                                <tr class="bg-gray-50 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <th class="px-6 py-3">Equipment</th>
+                                    <th class="px-6 py-3">Brand</th>
+                                    <th class="px-6 py-3">Condition</th>
+                                    <th class="px-6 py-3">Last Updated</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @if($equipments->isEmpty())
-                                    <tr>
-                                        <td colspan="5" class="py-10 text-center text-gray-500">No equipment found.</td>
-                                    </tr>
-                                @else
-                                    @foreach($equipments as $equipment)
+                            <tbody class="divide-y divide-gray-200">
+                                @forelse($equipments as $equipment)
+                                <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                    <td class="px-6 py-4">
+                                        {{-- === PERUBAHAN DI SINI === --}}
+                                        <a href="{{ route('customer.equipments.show', $equipment->id) }}" class="flex items-center group cursor-pointer">
+                                            @if($equipment->image_url)
+                                            <img class="w-12 h-12 rounded-lg object-cover mr-4 shadow-sm group-hover:shadow transition" src="{{ $equipment->image_url }}" alt="{{ $equipment->equipment_name }}">
+                                            @else
+                                            <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
+                                                <i class="fas fa-dumbbell text-gray-400"></i>
+                                            </div>
+                                            @endif
+                                            <div>
+                                                <p class="font-medium text-gray-900 group-hover:text-indigo-600 transition">{{ $equipment->equipment_name }}</p>
+                                                <p class="text-sm text-gray-500">{{ Str::limit($equipment->description, 50) }}</p>
+                                                <p class="text-xs text-gray-400 mt-0.5 md:hidden">{{ $equipment->brand }}</p>
+                                            </div>
+                                        </a>
+                                        {{-- ======================== --}}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $equipment->brand ?? 'General' }}</td>
+                                    <td class="px-6 py-4">
                                         @php
-                                            $condition = strtolower($equipment->condition);
-                                            $conditionClass = match($condition) {
-                                                'baik', 'good', 'baru' => 'bg-green-100 text-green-800',
-                                                'fair' => 'bg-yellow-100 text-yellow-800',
-                                                default => 'bg-red-100 text-red-800',
-                                            };
-                                            $conditionText = ucfirst($condition);
+                                        $conditionClass = match($equipment->condition) {
+                                            'Baik', 'Baru' => 'bg-green-100 text-green-800',
+                                            'Rusak' => 'bg-red-100 text-red-800',
+                                            default => 'bg-yellow-100 text-yellow-800'
+                                        };
                                         @endphp
-                                        <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                            <td class="px-6 py-4 font-medium text-gray-900">
-                                                <div class="flex items-center space-x-3">
-                                                    <img
-                                                        src="{{ $equipment->image_url ?? asset('images/gym-equipment.jpeg') }}"
-                                                        alt="{{ $equipment->equipment_name }}"
-                                                        class="w-12 h-12 object-cover rounded-md border"
-                                                    >
-                                                    <p>{{ $equipment->equipment_name }}</p>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4 text-gray-600">{{ $equipment->brand }}</td>
-                                            <td class="px-6 py-4">
-                                                <span class="px-2 py-1 text-xs font-medium {{ $conditionClass }} rounded-full">
-                                                    {{ $conditionText }}
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4 text-gray-600">
-                                                {{ $equipment->last_maintenance ? \Carbon\Carbon::parse($equipment->last_maintenance)->format('d M Y') : 'N/A' }}
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-gray-500 max-w-xs overflow-hidden truncate whitespace-normal">
-                                                {{ $equipment->description ?? 'No description available.' }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                @endif
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full {{ $conditionClass }}">
+                                            {{ $equipment->condition }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        {{ $equipment->updated_at ? $equipment->updated_at->format('d M Y') : 'No Record' }}
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-gray-500">
+                                        @if(request('search'))
+                                        No equipment found matching "{{ request('search') }}"
+                                        @else
+                                        No equipment available
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 {{-- Pagination --}}
-                @if($equipments->hasPages())
-                    <div class="mt-6">
-                        <x-pagination-footer
-                            firstItem="{{ $equipments->firstItem() }}"
-                            lastItem="{{ $equipments->lastItem() }}"
-                            total="{{ $equipments->total() }}"
-                            onFirstPage="{{ $equipments->onFirstPage() }}"
-                            hasMorePages="{{ $equipments->hasMorePages() }}"
-                            previousPageUrl="{{ $equipments->previousPageUrl() }}"
-                            nextPageUrl="{{ $equipments->nextPageUrl() }}"
-                            lastPage="{{ $equipments->lastPage() }}"
-                            currentPage="{{ $equipments->currentPage() }}"
-                            :pageUrl="fn($page) => request()->fullUrlWithQuery(['page' => $page])"
-                        />
-                    </div>
-                @endif
+                <div class="mt-6">
+                    {{ $equipments->links() }}
+                </div>
             </main>
         </div>
     </div>

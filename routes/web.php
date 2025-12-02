@@ -8,6 +8,10 @@ use App\Http\Controllers\Customer\CustomerProgressController;
 use App\Http\Controllers\Customer\CustomerBookingController;
 use App\Http\Controllers\Customer\PaymentController as CustomerPaymentController;
 use App\Http\Controllers\Admin\EquipmentController;
+// === TAMBAHKAN CONTROLLER EQUIPMENT CUSTOMER ===
+use App\Http\Controllers\Customer\CustomerEquipmentController;
+// === TAMBAHKAN CONTROLLER TRAINER CUSTOMER ===
+use App\Http\Controllers\Customer\CustomerTrainerController;
 // ===================================
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -27,7 +31,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-
 // Middleware untuk merouting berdasarkan role setelah login
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
@@ -43,7 +46,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
-
 // ADMIN ROUTES
 Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -51,43 +53,44 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/trainer', [AdminDashboardController::class, 'trainers'])->name('trainers_management');
     Route::get('/dashboard/booking', [AdminDashboardController::class, 'bookings'])->name('bookings_management');
     Route::get('/dashboard/classes', [AdminDashboardController::class, 'classes'])->name('classes_management');
-    Route::get('/admin/equipments/{id}', [EquipmentController::class, 'show'])->name('admin.equipments.show');
 
     // Detail Pages Routes
-    // Detail Routes
     Route::get('/users/{id}', [AdminDashboardController::class, 'userDetail'])->name('user.detail');
     Route::get('/trainers/{id}', [AdminDashboardController::class, 'trainerDetail'])->name('trainer.detail');
 
+    // Equipment Routes
     Route::get('/dashboard/equipment', [AdminDashboardController::class, 'equipments'])->name('equipments_management');
     Route::get('/dashboard/equipment/create', [EquipmentController::class, 'create'])->name('equipments.create');
     Route::post('/dashboard/equipment', [EquipmentController::class, 'store'])->name('equipments.store');
     Route::get('/dashboard/equipment/{id}', [EquipmentController::class, 'show'])->name('equipments.show');
-
     Route::get('/dashboard/equipment/{id}/edit', [EquipmentController::class, 'edit'])->name('equipments.edit');
     Route::put('/dashboard/equipment/{id}', [EquipmentController::class, 'update'])->name('equipments.update');
-
     Route::delete('/dashboard/equipment/{id}', [EquipmentController::class, 'destroy'])->name('equipments.destroy');
+    
     Route::get('/dashboard/transactions', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
 });
-
 
 // CUSTOMER ROUTES
 Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
 
-    // EQUIPMENT ROUTE
+    // === EQUIPMENT ROUTES ===
     Route::get('/equipment', [CustomerDashboardController::class, 'equipments'])->name('equipments.index');
+    Route::get('/equipment/{id}', [CustomerEquipmentController::class, 'show'])->name('equipments.show');
+    // ========================
 
-    // TRAINER ROUTE
+    // === TRAINER ROUTES ===
     Route::get('/trainers', [CustomerDashboardController::class, 'trainers'])->name('trainers.index');
+    Route::get('/trainers/{id}', [CustomerTrainerController::class, 'show'])->name('trainers.show');
+    // ======================
 
     // Progress Tracking Routes
     Route::resource('progress', CustomerProgressController::class);
 
-    // === PASTIKAN BOOKING RESOURCE ADA ===
+    // === BOOKING ROUTES ===
     // Ini akan otomatis membuat rute: index, create, store, show, edit, update, destroy
     Route::resource('bookings', CustomerBookingController::class);
-    // =====================================
+    // ======================
 
     // PAYMENT ROUTES untuk aktivasi membership
     Route::prefix('payment')->name('payment.')->group(function () {
@@ -106,7 +109,6 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
             ->where('va_number', '[0-9]+');
     });
 });
-
 
 // TRAINER ROUTES
 Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')->name('trainer.')->group(function () {

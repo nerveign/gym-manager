@@ -6,6 +6,9 @@
     <title>My Progress Tracking | Customer</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- 1. PENTING: CDN SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100">
     <div class="flex h-screen">
@@ -37,9 +40,9 @@
             </nav>
 
             {{-- User Profile Section --}}
-            <div class="absolute bottom-0 w-64 p-4  flex justify-between bg-white border-t"> {{-- Tambahkan border-t --}}
+            <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
-                    <a href="{{ route('profile.edit') }}"> {{-- Perbaiki href --}}
+                    <a href="{{ route('profile.edit') }}">
                         <img class="w-8 h-8 rounded-full object-cover" src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}" alt="{{ auth()->user()->name }}">
                     </a>
                     <div class="ml-3">
@@ -50,8 +53,8 @@
                 <div>
                     <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"> {{-- Ubah padding --}}
-                                <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500"> {{-- Tambah class --}}
+                            <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                                <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500">
                             </button>
                     </form>
                 </div>
@@ -59,14 +62,10 @@
         </div>
 
         {{-- Area Konten Utama (Main Content) --}}
-        {{-- === PERBAIKAN DI SINI: Hapus ml-64 dari div ini === --}}
         <div class="flex-1">
-            {{-- === PERBAIKAN DI SINI: Pastikan ml-64 ada di <main> === --}}
-            <main class="ml-64 min-h-screen bg-gray-100 p-6"> {{-- Hapus flex-1 jika tidak perlu --}}
+            <main class="ml-64 min-h-screen bg-gray-100 p-6">
 
-                {{-- START: Konten Asli dari index.blade.php --}}
-
-                {{-- Header Halaman (diambil dari <x-slot>) --}}
+                {{-- Header Halaman --}}
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                         {{ __('My Progress Tracking') }}
@@ -80,14 +79,13 @@
                     </a>
                 </div>
 
-                <div class="max-w-7xl mx-auto"> {{-- Menghapus padding sm:px-6 lg:px-8 agar rata --}}
+                <div class="max-w-7xl mx-auto">
                     @if(session('success'))
                         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
                             {{ session('success') }}
                         </div>
                     @endif
 
-                    {{-- Periksa apakah variabel $progress di-pass --}}
                     @isset($progress)
                         @if($progress->count() > 0)
                             <div class="flex flex-col gap-3" >
@@ -103,7 +101,6 @@
                                                         <div>
                                                             <h3 class="text-lg font-semibold text-gray-900">{{ $item->exercise }}</h3>
                                                             <span class="text-sm text-gray-500">
-                                                                {{-- FIX: Tambahkan pengecekan null pada created_at --}}
                                                                 {{ $item->created_at ? $item->created_at->format('M j, Y') : 'N/A' }}
                                                             </span>
                                                         </div>
@@ -117,13 +114,15 @@
                                                     <a href="{{ route('customer.progress.edit', $item->id) }}" class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200" title="Edit">
                                                         <i class="fas fa-pencil-alt w-4 h-4"></i>
                                                     </a>
-                                                    <form action="{{ route('customer.progress.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this progress record?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors duration-200" title="Delete">
-                                                            <i class="fas fa-trash-alt w-4 h-4"></i>
-                                                        </button>
-                                                    </form>
+                                                    
+                                                    {{-- 2. UBAH TOMBOL DELETE DI SINI --}}
+                                                    {{-- Menggunakan type="button" dan onclick confirmDelete --}}
+                                                    <button type="button" 
+                                                            onclick="confirmDelete('{{ route('customer.progress.destroy', $item->id) }}')"
+                                                            class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors duration-200" 
+                                                            title="Delete">
+                                                        <i class="fas fa-trash-alt w-4 h-4"></i>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -151,17 +150,63 @@
                             </div>
                         @endif
                     @else
-                        {{-- Tampilan jika variabel $progress tidak ada (error handling) --}}
                         <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg mb-6">
                            Error: Progress data could not be loaded.
                         </div>
                     @endisset
                 </div>
-
-                {{-- END: Konten Asli dari index.blade.php --}}
-
             </main>
         </div>
     </div>
+
+    {{-- 3. Form Hidden & Script SweetAlert (Sama seperti dashboard) --}}
+    <form id="deleteForm" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
+<script>
+    function confirmDelete() {
+      Swal.fire({
+        // Menggunakan HTML Custom untuk kontrol penuh layout
+        html: `
+                    <div class="flex flex-col items-center pt-4">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-2">Hapus Progress Tracking?</h2>
+                        <p class="text-sm text-gray-500 text-center px-4 mb-2">
+                            Tindakan ini akan menghapus data <span class="font-bold text-gray-700">permanen</span>.
+                        </p>
+                        
+                    </div>
+                `,
+        showCloseButton: false,
+        showCancelButton: true,
+        focusConfirm: false,
+
+        // Text Tombol
+        confirmButtonText: 'Ya, Hapus Data',
+        cancelButtonText: 'Batalkan',
+
+        // Matikan styling bawaan
+        buttonsStyling: false,
+
+        // Styling Tailwind untuk elemen popup
+        customClass: {
+          popup: 'rounded-2xl p-0 w-[24rem]', // Popup bulat dan lebar fixed
+          actions: 'flex gap-3 justify-center w-full px-6 pb-6 mt-6', // Container tombol
+          // Tombol Hapus menggunakan merah yang lebih soft
+          confirmButton: 'w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition shadow-sm',
+          cancelButton: 'w-full py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm transition'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('delete-form').submit();
+        }
+      })
+    }
+  </script>
 </body>
+
 </html>
