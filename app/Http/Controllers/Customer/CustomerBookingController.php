@@ -7,8 +7,8 @@ use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException; // Tambahkan ini
-use Illuminate\Validation\Rule; // Tambahkan Rule untuk validasi unik
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class CustomerBookingController extends Controller
 {
@@ -16,36 +16,46 @@ class CustomerBookingController extends Controller
      * Menampilkan daftar booking milik customer.
      * Terhubung ke rute: customer.bookings.index (GET)
      */
-    public function index()
+    // UBAH DISINI: Tambahkan parameter Request $request
+    public function index(Request $request) 
     {
         $user = Auth::user();
 
-        // Ambil ID semua membership yang dimiliki user (bisa jadi user punya > 1 membership)
-        // Pastikan relasi 'membership' adalah hasMany jika user bisa punya banyak membership
-        // Jika hanya hasOne, cukup ambil ID dari $user->membership->id
-        $membershipIds = $user->membership()->pluck('id'); // Asumsi relasi sudah benar
+        // Ambil ID semua membership yang dimiliki user
+        $membershipIds = $user->membership()->pluck('id');
 
-        // Ambil semua booking yang membership_id-nya ada di $membershipIds
-        $bookings = Booking::whereIn('membership_id', $membershipIds)
-                           ->with('trainer') // Eager load trainer data
-                           ->latest() // Urutkan dari yang terbaru
-                           ->paginate(10); // Batasi 10 per halaman
+        // 1. Inisialisasi Query Dasar (Belum dieksekusi/di-get)
+        $query = Booking::whereIn('membership_id', $membershipIds)
+                        ->with('trainer'); // Eager load trainer data
+
+        // 2. TAMBAHKAN LOGIC SEARCH DISINI
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            
+            // Filter booking berdasarkan nama trainer (relasi 'trainer')
+            $query->whereHas('trainer', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        // 3. Eksekusi Query (Latest & Paginate)
+        // Variabel $bookings sekarang menampung hasil yang sudah difilter (jika ada search)
+        $bookings = $query->latest()->paginate(10);
 
         return view('customer.bookings.index', compact('user', 'bookings'));
     }
 
     /**
      * Menampilkan form untuk membuat booking baru.
-     * Terhubung ke rute: customer.bookings.create (GET)
+     * (TIDAK DIUBAH)
      */
     public function create()
     {
         $user = Auth::user();
-        $activeMembership = $user->activeMembership; // Menggunakan relasi
+        $activeMembership = $user->activeMembership;
 
-        // Jika tidak punya membership aktif, jangan biarkan membuat booking
         if (!$activeMembership) {
-            return redirect()->route('customer.bookings.index') // Redirect ke index booking
+            return redirect()->route('customer.bookings.index')
                            ->with('error', 'You must have an active membership to make a booking.');
         }
 
@@ -55,8 +65,8 @@ class CustomerBookingController extends Controller
     }
 
     /**
-     * Menyimpan booking baru yang disubmit dari form ke database.
-     * Terhubung ke rute: customer.bookings.store (POST)
+     * Menyimpan booking baru.
+     * (TIDAK DIUBAH)
      */
     public function store(Request $request)
     {
@@ -64,11 +74,10 @@ class CustomerBookingController extends Controller
         $activeMembership = $user->activeMembership;
 
         if (!$activeMembership) {
-            return redirect()->route('customer.bookings.index') // Redirect ke index booking
+            return redirect()->route('customer.bookings.index')
                            ->with('error', 'You must have an active membership to make a booking.');
         }
 
-        // Validasi data
         try {
             $validatedData = $request->validate([
                 'trainer_id' => 'required|exists:users,id',
@@ -90,32 +99,26 @@ class CustomerBookingController extends Controller
                 'time' => [
                     'required',
                     'date_format:H:i',
-                    // === TAMBAHKAN VALIDASI UNIK UNTUK DOUBLE BOOKING ===
                     Rule::unique('bookings')->where(function ($query) use ($request) {
                         return $query->where('trainer_id', $request->trainer_id)
                                      ->where('date', $request->date);
-                                     // Time check is implied by date_format + unique rule on these 3 columns
                     }),
-                    // ===================================================
                 ],
                 'duration' => 'required|integer|min:30|max:120',
             ], [
-                // Pesan error kustom untuk validasi unique time
                 'time.unique' => 'The selected trainer is already booked at this date and time. Please choose a different time slot.'
             ]);
 
         } catch (ValidationException $e) {
-            // Jika validasi gagal, kembalikan ke form dengan error dan input lama
              return redirect()->route('customer.bookings.create')
                              ->withErrors($e->validator)
                              ->withInput();
         }
 
-
         Booking::create([
             'trainer_id' => $validatedData['trainer_id'],
             'membership_id' => $activeMembership->id,
-            'duration' => $validatedData['duration'], // Ambil dari request
+            'duration' => $validatedData['duration'],
             'date' => $validatedData['date'],
             'time' => $validatedData['time'],
         ]);
@@ -124,31 +127,22 @@ class CustomerBookingController extends Controller
                        ->with('success', 'Booking created successfully!');
     }
 
-
     /**
      * Menghapus booking.
-     * Terhubung ke rute: customer.bookings.destroy (DELETE)
+     * (TIDAK DIUBAH)
      */
-    public function destroy(Booking $booking) // Gunakan Route Model Binding
+    public function destroy(Booking $booking)
     {
         $user = Auth::user();
 
-        // Pastikan booking yang akan dihapus benar-benar milik user yang login
-        // Cek melalui relasi membership -> user
         if ($booking->membership->user_id !== $user->id) {
-             // Jika bukan miliknya, kembalikan error unauthorized
             return redirect()->route('customer.bookings.index')
                            ->with('error', 'Unauthorized action.');
-            // atau bisa juga: abort(403, 'Unauthorized action.');
         }
 
-        // Hapus booking dari database
         $booking->delete();
 
-        // Redirect kembali ke halaman daftar booking dengan pesan sukses
         return redirect()->route('customer.bookings.index')
                        ->with('success', 'Booking deleted successfully!');
     }
-
-    // Metode lain seperti show, edit, update tidak kita perlukan untuk sekarang
 }

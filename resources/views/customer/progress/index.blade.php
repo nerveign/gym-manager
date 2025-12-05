@@ -6,44 +6,36 @@
     <title>My Progress Tracking | Customer</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    {{-- 1. PENTING: CDN SweetAlert2 --}}
+    {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100">
     <div class="flex h-screen">
-        {{-- Fixed Sidebar (Sidebar) --}}
+        
+        {{-- ================= SIDEBAR ================= --}}
         <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
-            {{-- Menggunakan auth() helper jika $user tidak di-pass --}}
             <x-dashboard-header name="{{ auth()->user()->name }}" />
 
             <nav class="mt-6">
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400">Main</div>
-
-                {{-- Nav-Item untuk Home (INACTIVE) --}}
                 <x-nav-item text="Home" color="text-gray-600" src="home.svg" location="customer.dashboard" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Aktivitas Saya</div>
-
-                {{-- Nav-Item untuk Progress Tracking (ACTIVE) --}}
+                {{-- Menu Active --}}
                 <x-nav-item text="Progress Tracking" color="text-zinc-700" src="barbell.svg" location="customer.progress.index" style="bg-blue-50 border-r-4 border-blue-500" />
-
-                {{-- Nav-Item untuk My Bookings (INACTIVE) --}}
-                <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" /> 
+                <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
-
-                {{-- Nav-Item Trainer List (INACTIVE) --}}
                 <x-nav-item text="Trainer List" color="text-gray-600" src="user.svg" location="customer.trainers.index" />
-                {{-- Nav-Item Equipment (INACTIVE) --}}
                 <x-nav-item text="Equipment List" color="text-gray-600" src="equipment.svg" location="customer.equipments.index" />
             </nav>
 
-            {{-- User Profile Section --}}
             <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
                     <a href="{{ route('profile.edit') }}">
-                        <img class="w-8 h-8 rounded-full object-cover" src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}" alt="{{ auth()->user()->name }}">
+                        <img class="w-8 h-8 rounded-full object-cover" 
+                             src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}" 
+                             alt="{{ auth()->user()->name }}">
                     </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</p>
@@ -52,124 +44,166 @@
                 </div>
                 <div>
                     <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500">
-                            </button>
+                        @csrf
+                        <button type="submit" class="flex items-center p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                            <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 text-gray-500">
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        {{-- Area Konten Utama (Main Content) --}}
-        <div class="flex-1">
-            <main class="ml-64 min-h-screen bg-gray-100 p-6">
-
-                {{-- Header Halaman --}}
+        {{-- ================= MAIN CONTENT ================= --}}
+        <div class="flex-1 ml-64">
+            <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
+                
+                {{-- 1. HEADER HALAMAN (Sesuai Referensi) --}}
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                        {{ __('My Progress Tracking') }}
-                    </h2>
-                    <a href="{{ route('customer.progress.create') }}"
-                       class="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                        <span>Add Progress</span>
+                    {{-- Judul di Kiri --}}
+                    <h2 class="text-2xl font-bold text-gray-900">Progress Tracking Management</h2>
+                    
+                    {{-- Tombol Tambah di Kanan (Biru) --}}
+                    <a href="{{ route('customer.progress.create') }}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm font-medium flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Tambah Progress
                     </a>
                 </div>
 
-                <div class="max-w-7xl mx-auto">
-                    @if(session('success'))
-                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-                            {{ session('success') }}
+                {{-- 2. SEARCH BAR FULL WIDTH (Sesuai Referensi) --}}
+                <div class="mb-6">
+                    <form method="GET" action="{{ route('customer.progress.index') }}" class="flex gap-4">
+                        <div class="flex-1">
+                            <input type="text"
+                                   name="search"
+                                   value="{{ request('search') }}"
+                                   placeholder="Search progress by exercise name or description..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                         </div>
-                    @endif
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            Search
+                        </button>
+                        @if(request('search'))
+                            <a href="{{ route('customer.progress.index') }}" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium flex items-center">
+                                Clear
+                            </a>
+                        @endif
+                    </form>
+                </div>
 
-                    @isset($progress)
-                        @if($progress->count() > 0)
-                            <div class="flex flex-col gap-3" >
-                                @foreach($progress as $item)
-                                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                                        <div class="p-6">
-                                            <div class="flex items-start justify-between">
-                                                <div class="flex-1">
-                                                    <div class="flex items-center space-x-4 mb-3">
-                                                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                                            <i class="fas fa-dumbbell text-xl text-blue-600"></i>
-                                                        </div>
-                                                        <div>
-                                                            <h3 class="text-lg font-semibold text-gray-900">{{ $item->exercise }}</h3>
-                                                            <span class="text-sm text-gray-500">
-                                                                {{ $item->created_at ? $item->created_at->format('M j, Y') : 'N/A' }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <p class="text-gray-600 text-sm mb-4">
-                                                        <strong>Duration:</strong> {{ $item->duration }} minutes
-                                                    </p>
-                                                    <p class="text-gray-700 whitespace-pre-wrap">{{ $item->description ?? 'No description provided.' }}</p>
-                                                </div>
-                                                <div class="flex space-x-2">
-                                                    <a href="{{ route('customer.progress.edit', $item->id) }}" class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200" title="Edit">
-                                                        <i class="fas fa-pencil-alt w-4 h-4"></i>
-                                                    </a>
-                                                    
-                                                    {{-- 2. UBAH TOMBOL DELETE DI SINI --}}
-                                                    {{-- Menggunakan type="button" dan onclick confirmDelete --}}
-                                                    <button type="button" 
-                                                            onclick="confirmDelete('{{ route('customer.progress.destroy', $item->id) }}')"
-                                                            class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors duration-200" 
-                                                            title="Delete">
-                                                        <i class="fas fa-trash-alt w-4 h-4"></i>
-                                                    </button>
-                                                </div>
+                {{-- Alert Sukses --}}
+                @if(session('success'))
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                    </div>
+                @endif
+
+                {{-- 3. TABEL DATA LIST (Menggantikan Card View) --}}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                {{-- Header Tabel --}}
+                                <tr class="bg-gray-50 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <th class="px-6 py-3">LATIHAN / EXERCISE</th>
+                                    <th class="px-6 py-3">DURATION</th>
+                                    <th class="px-6 py-3">DATE RECORDED</th>
+                                    <th class="px-6 py-3 text-right">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                @forelse($progress as $item)
+                                <tr class="hover:bg-gray-50 transition-colors duration-200 group">
+                                    
+                                    {{-- Kolom 1: Exercise (Mirip style kolom Equipment Name) --}}
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            {{-- Icon visual pengganti gambar produk --}}
+                                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition shadow-sm">
+                                                <i class="fas fa-dumbbell"></i>
+                                            </div>
+                                            <div>
+                                                {{-- Nama Latihan --}}
+                                                <p class="font-medium text-gray-900 group-hover:text-blue-600 transition">{{ $item->exercise }}</p>
+                                                {{-- Deskripsi singkat dibawah nama --}}
+                                                <p class="text-sm text-gray-500">{{ Str::limit($item->description, 60) ?? 'No notes' }}</p>
                                             </div>
                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
+                                    </td>
+                                    
+                                    {{-- Kolom 2: Duration (Mirip style kolom Brand/Condition) --}}
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-200">
+                                            {{ $item->duration }} Menit
+                                        </span>
+                                    </td>
 
-                        @else
-                            {{-- Tampilan jika tidak ada progress --}}
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                                <div class="text-center py-12">
-                                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    <h3 class="text-lg font-medium text-gray-900 mb-2">No progress records yet</h3>
-                                    <p class="text-gray-500 mb-6">Start tracking your fitness journey by adding your first progress record.</p>
-                                    <a href="{{ route('customer.progress.create') }}"
-                                       class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium inline-flex items-center space-x-2 transition-colors duration-200">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                        </svg>
-                                        <span>Add First Progress</span>
-                                    </a>
-                                </div>
-                            </div>
-                        @endif
-                    @else
-                        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg mb-6">
-                           Error: Progress data could not be loaded.
-                        </div>
-                    @endisset
+                                    {{-- Kolom 3: Date (Mirip style kolom Last Updated) --}}
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        @if($item->created_at)
+                                            {{ $item->created_at->format('d M Y') }}
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Kolom 4: Actions --}}
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-3">
+                                            {{-- Tombol Edit --}}
+                                            <a href="{{ route('customer.progress.edit', $item->id) }}" 
+                                               class="text-blue-600 hover:text-blue-800 font-medium text-sm transition flex items-center gap-1">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            {{-- Tombol Delete --}}
+                                            <button type="button" 
+                                                    onclick="confirmDelete('{{ route('customer.progress.destroy', $item->id) }}')"
+                                                    class="text-red-600 hover:text-red-800 font-medium text-sm transition flex items-center gap-1">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="py-12 text-center text-gray-500">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                                                <i class="fas fa-clipboard-list text-2xl"></i>
+                                            </div>
+                                            <p class="font-medium text-gray-900">No progress data found</p>
+                                            <p class="text-sm text-gray-500 mt-1">
+                                                @if(request('search'))
+                                                    No results for "{{ request('search') }}"
+                                                @else
+                                                    Start tracking your fitness journey today!
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
             </main>
         </div>
     </div>
 
-    {{-- 3. Form Hidden & Script SweetAlert (Sama seperti dashboard) --}}
-    <form id="deleteForm" method="POST" style="display: none;">
+    {{-- Form Delete Global --}}
+    <form id="delete-form" method="POST" style="display:none;">
         @csrf
         @method('DELETE')
     </form>
 
-<script>
-    function confirmDelete() {
-      Swal.fire({
-        // Menggunakan HTML Custom untuk kontrol penuh layout
-        html: `
+    <script>
+        function confirmDelete(url) {
+            const form = document.getElementById('delete-form');
+            form.action = url;
+            Swal.fire({
+                // Menggunakan HTML Custom untuk kontrol penuh layout
+                html: `
                     <div class="flex flex-col items-center pt-4">
                         <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                             <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
@@ -178,35 +212,33 @@
                         <p class="text-sm text-gray-500 text-center px-4 mb-2">
                             Tindakan ini akan menghapus data <span class="font-bold text-gray-700">permanen</span>.
                         </p>
-                        
                     </div>
                 `,
-        showCloseButton: false,
-        showCancelButton: true,
-        focusConfirm: false,
+                showCloseButton: false,
+                showCancelButton: true,
+                focusConfirm: false,
 
-        // Text Tombol
-        confirmButtonText: 'Ya, Hapus Data',
-        cancelButtonText: 'Batalkan',
+                // Text Tombol
+                confirmButtonText: 'Ya, Hapus Data',
+                cancelButtonText: 'Batalkan',
 
-        // Matikan styling bawaan
-        buttonsStyling: false,
+                // Matikan styling bawaan
+                buttonsStyling: false,
 
-        // Styling Tailwind untuk elemen popup
-        customClass: {
-          popup: 'rounded-2xl p-0 w-[24rem]', // Popup bulat dan lebar fixed
-          actions: 'flex gap-3 justify-center w-full px-6 pb-6 mt-6', // Container tombol
-          // Tombol Hapus menggunakan merah yang lebih soft
-          confirmButton: 'w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition shadow-sm',
-          cancelButton: 'w-full py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm transition'
+                // Styling Tailwind untuk elemen popup
+                customClass: {
+                    popup: 'rounded-2xl p-0 w-[24rem]', // Popup bulat dan lebar fixed
+                    actions: 'flex gap-3 justify-center w-full px-6 pb-6 mt-6', // Container tombol
+                    // Tombol Hapus menggunakan merah yang lebih soft
+                    confirmButton: 'w-full py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition shadow-sm',
+                    cancelButton: 'w-full py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm transition'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            })
         }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          document.getElementById('delete-form').submit();
-        }
-      })
-    }
-  </script>
+    </script>
 </body>
-
 </html>
