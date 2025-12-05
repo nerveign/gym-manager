@@ -112,9 +112,47 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
 
 // TRAINER ROUTES
 Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')->name('trainer.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', function () {
         return view('trainer.dashboard', ['user' => auth()->user()]);
     })->name('dashboard');
+
+    // Profile Settings
+    Route::get('/profile', function () {
+        return view('trainer.profile', ['user' => auth()->user()]);
+    })->name('profile.edit');
+    
+    // Profile Update (untuk form submit)
+    Route::put('/profile', function (Request $request) {
+        $user = auth()->user();
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048'
+        ]);
+
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->profile_photo_path) {
+                Storage::delete('public/' . $user->profile_photo_path);
+            }
+            
+            // Store new photo
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
+        }
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        if (isset($validated['phone'])) {
+            $user->phone = $validated['phone'];
+        }
+        $user->save();
+
+        return redirect()->route('trainer.profile.edit')->with('success', 'Profile updated successfully!');
+    })->name('profile.update');
 });
 
 // Webhook route (outside auth middleware)
