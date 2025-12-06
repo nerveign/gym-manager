@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }} - My Bookings</title>
+    <title>{{ config('app.name', 'FitAja') }} - My Bookings</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -12,72 +12,54 @@
     <div class="flex h-screen">
 
         {{-- FIXED SIDEBAR --}}
-        <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
+        <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r flex flex-col">
 
-            {{-- Header Sidebar --}}
-            <div class="h-16 flex items-center px-6 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="h-10 w-10 rounded-lg flex items-center justify-center bg-indigo-600">
-                        <img src="{{ asset('icons/barbell.svg') }}" 
-                             alt="Logo"
-                             class="w-6 h-6 invert brightness-0">
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-gray-900">My Bookings</p>
-                        <p class="text-xs text-gray-500">
-                            Welcome, {{ explode(' ', Auth::user()->name)[0] }}!
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {{-- Header Sidebar (DIPERBAIKI: Menggunakan Komponen Standar) --}}
+            <x-dashboard-header name="{{ auth()->user()->name }}" />
 
             {{-- Navigation Menu --}}
-            <nav class="mt-6">
+            <nav class="mt-6 flex-1 overflow-y-auto">
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400">Main</div>
                 
+                {{-- Dashboard Link (Inactive) --}}
                 <a href="{{ route('trainer.dashboard') }}" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
-                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                    </svg>
+                    <img src="{{ asset('icons/home.svg') }}" alt="home" class="w-5 h-5 mr-3 text-gray-500">
                     <span>Dashboard</span>
                 </a>
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-4">Aktivitas Saya</div>
                 
-                <a href="{{ route('trainer.bookings') }}" class="flex items-center px-4 py-3 text-white bg-blue-50 border-r-2 border-blue-600 transition-colors">
-                    <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="text-blue-600 font-medium">Booking Saya</span>
+                {{-- Booking Link (Active) --}}
+                <a href="{{ route('trainer.bookings') }}" class="flex items-center px-4 py-3 bg-blue-50 text-blue-600 border-r-4 border-blue-600 transition-colors">
+                    <img src="{{ asset('icons/calendar.svg') }}" alt="booking" class="w-5 h-5 mr-3 text-blue-600">
+                    <span class="font-medium">Booking Saya</span>
                 </a>
             </nav>
 
             {{-- User Profile Section --}}
-            <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
-                <a href="{{ route('trainer.profile.edit') }}" class="flex items-center flex-1 hover:bg-gray-50 rounded-lg p-2 transition-colors">
-                    @if(Auth::user()->profile_photo_path)
-                        <img class="w-8 h-8 rounded-full object-cover" 
-                             src="{{ asset('storage/' . Auth::user()->profile_photo_path) }}" 
-                             alt="{{ Auth::user()->name }}">
-                    @else
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center">
-                            <span class="text-white text-xs font-semibold">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                            </span>
+            <div class="p-4 border-t bg-white flex-shrink-0">
+                <div class="flex items-center justify-between">
+                    <a href="{{ route('trainer.profile.edit') }}" class="flex items-center flex-1 hover:bg-gray-50 rounded-lg p-2 transition-colors group">
+                        @if(auth()->user()->image_url)
+                            <img class="w-8 h-8 rounded-full object-cover border border-gray-200" 
+                                 src="{{ auth()->user()->image_url }}" 
+                                 alt="{{ auth()->user()->name }}">
+                        @else
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300">
+                                <i class="fas fa-user text-gray-400 text-xs"></i>
+                            </div>
+                        @endif
+                        <div class="ml-3 overflow-hidden">
+                            <p class="text-sm font-medium text-gray-700 truncate group-hover:text-indigo-600 transition-colors">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-gray-500 capitalize">{{ ucfirst(auth()->user()->role) }}</p>
                         </div>
-                    @endif
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-700">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-gray-500">{{ ucfirst(Auth::user()->role) }}</p>
-                    </div>
-                </a>
+                    </a>
 
-                <div>
                     <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
                         @csrf
                     </form>
                     <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();" 
-                            class="flex items-center text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-50"
+                            class="flex items-center justify-center w-8 h-8 ml-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             title="Logout">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
@@ -86,8 +68,8 @@
         </div>
 
         {{-- MAIN CONTENT AREA --}}
-        <div class="flex-1 ml-64 bg-gray-100">
-            <main class="pt-8 pb-8 px-8 h-screen overflow-y-auto">
+        <div class="flex-1 ml-64 bg-gray-100 h-screen overflow-hidden">
+            <main class="pt-8 pb-8 px-8 h-full overflow-y-auto scroll-container">
                 {{-- Header --}}
                 <div class="mb-6">
                     <div class="flex items-center justify-between">
@@ -99,27 +81,32 @@
                 </div>
 
                 {{-- Filters --}}
-                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
                     <form method="GET" action="{{ route('trainer.bookings') }}" class="flex flex-wrap gap-4">
                         {{-- Search --}}
                         <div class="flex-1 min-w-64">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Search Client</label>
-                            <input type="text" name="search" value="{{ request('search') }}" 
-                                   placeholder="Search by client name or email..."
-                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </span>
+                                <input type="text" name="search" value="{{ request('search') }}" 
+                                       placeholder="Search by client name or email..."
+                                       class="w-full pl-10 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                            </div>
                         </div>
 
                         {{-- Date Filter --}}
                         <div class="min-w-48">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
                             <input type="date" name="date" value="{{ request('date') }}"
-                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
                         </div>
 
                         {{-- Status Filter --}}
                         <div class="min-w-40">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
                                 <option value="">All Status</option>
                                 <option value="today" {{ request('status') == 'today' ? 'selected' : '' }}>Today</option>
                                 <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
@@ -129,11 +116,11 @@
 
                         {{-- Search Button --}}
                         <div class="flex items-end">
-                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-search mr-2"></i>Filter
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                <i class="fas fa-filter mr-2"></i>Filter
                             </button>
                             @if(request()->hasAny(['search', 'date', 'status']))
-                                <a href="{{ route('trainer.bookings') }}" class="ml-2 text-gray-500 hover:text-gray-700 px-4 py-2 border border-gray-300 rounded-lg">
+                                <a href="{{ route('trainer.bookings') }}" class="ml-2 text-gray-500 hover:text-gray-700 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                                     Clear
                                 </a>
                             @endif
@@ -142,19 +129,19 @@
                 </div>
 
                 {{-- Bookings List --}}
-                <div class="bg-white rounded-lg shadow">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                     @if($bookings->count() > 0)
                         {{-- Header --}}
-                        <div class="p-6 border-b border-gray-200">
+                        <div class="p-6 border-b border-gray-100 bg-gray-50">
                             <h3 class="text-lg font-semibold text-gray-900">
-                                Training Sessions ({{ $bookings->total() }} total)
+                                Training Sessions <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ $bookings->total() }} total</span>
                             </h3>
                         </div>
 
                         {{-- Bookings Table --}}
                         <div class="overflow-x-auto">
                             <table class="w-full">
-                                <thead class="bg-gray-50">
+                                <thead class="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
@@ -162,19 +149,19 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-200">
+                                <tbody class="divide-y divide-gray-100 bg-white">
                                     @foreach($bookings as $booking)
-                                        <tr class="hover:bg-gray-50">
+                                        <tr class="hover:bg-gray-50 transition-colors">
                                             {{-- Client Info --}}
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex items-center">
-                                                    @if($booking->membership->user->profile_photo_path)
-                                                        <img class="w-10 h-10 rounded-full object-cover" 
-                                                             src="{{ asset('storage/' . $booking->membership->user->profile_photo_path) }}" 
+                                                    @if($booking->membership->user->image_url)
+                                                        <img class="w-10 h-10 rounded-full object-cover border border-gray-200" 
+                                                             src="{{ $booking->membership->user->image_url }}" 
                                                              alt="{{ $booking->membership->user->name }}">
                                                     @else
                                                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                                                            <span class="text-white text-sm font-semibold">
+                                                            <span class="text-white text-sm font-bold">
                                                                 {{ strtoupper(substr($booking->membership->user->name, 0, 1)) }}
                                                             </span>
                                                         </div>
@@ -188,24 +175,36 @@
 
                                             {{-- Date & Time --}}
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }}</div>
-                                                <div class="text-sm text-gray-500">{{ $booking->time }}</div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-sm font-medium text-gray-900">
+                                                        {{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }}
+                                                    </span>
+                                                    <span class="text-sm text-gray-500 flex items-center mt-1">
+                                                        <i class="far fa-clock mr-1.5 text-xs"></i>
+                                                        {{ $booking->time }}
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {{-- Duration --}}
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="text-sm text-gray-900">{{ $booking->duration }} minutes</span>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <i class="fas fa-stopwatch mr-1.5"></i>
+                                                    {{ $booking->duration }} mins
+                                                </span>
                                             </td>
 
                                             {{-- Contact --}}
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 @if($booking->membership->user->phone)
-                                                    <a href="tel:{{ $booking->membership->user->phone }}" 
-                                                       class="text-blue-600 hover:text-blue-800">
-                                                        <i class="fas fa-phone mr-1"></i>{{ $booking->membership->user->phone }}
+                                                    <a href="https://wa.me/{{ preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $booking->membership->user->phone)) }}" 
+                                                       target="_blank"
+                                                       class="inline-flex items-center text-green-600 hover:text-green-800 font-medium transition-colors">
+                                                        <i class="fab fa-whatsapp text-lg mr-2"></i>
+                                                        {{ $booking->membership->user->phone }}
                                                     </a>
                                                 @else
-                                                    <span class="text-gray-400">No phone</span>
+                                                    <span class="text-gray-400 italic">No phone</span>
                                                 @endif
                                             </td>
                                         </tr>
@@ -215,23 +214,23 @@
                         </div>
 
                         {{-- Pagination --}}
-                        <div class="px-6 py-4 border-t border-gray-200">
+                        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
                             {{ $bookings->withQueryString()->links() }}
                         </div>
                     @else
                         {{-- Empty State --}}
-                        <div class="p-12 text-center">
-                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <h3 class="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+                        <div class="p-16 text-center">
+                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i class="far fa-calendar-times text-gray-400 text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">No bookings found</h3>
                             @if(request()->hasAny(['search', 'date', 'status']))
-                                <p class="text-gray-500 mb-4">No bookings match your current filters.</p>
-                                <a href="{{ route('trainer.bookings') }}" class="text-blue-600 hover:text-blue-800 font-medium">
-                                    Clear filters
+                                <p class="text-gray-500 mb-6 max-w-sm mx-auto">We couldn't find any sessions matching your filters. Try adjusting your search criteria.</p>
+                                <a href="{{ route('trainer.bookings') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                    Clear All Filters
                                 </a>
                             @else
-                                <p class="text-gray-500">You don't have any training sessions yet.</p>
+                                <p class="text-gray-500 max-w-sm mx-auto">You don't have any training sessions scheduled yet.</p>
                             @endif
                         </div>
                     @endif
