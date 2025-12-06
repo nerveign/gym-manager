@@ -97,7 +97,24 @@ class DashboardController extends Controller
             abort(404);
         }
 
-        return view('admin.user-detail', compact('user', 'customer'));
+        // Ambil data yang diperlukan untuk view
+        $transactions = $customer->transactions()->latest()->get();
+        $memberships = $customer->memberships;
+        $userProgress = $customer->userProgress;
+        
+        // Ambil recent bookings untuk customer ini melalui memberships
+        $membershipIds = $customer->memberships->pluck('id');
+        $recentBookings = collect();
+        
+        if ($membershipIds->count() > 0) {
+            $recentBookings = Booking::with('trainer')
+                ->whereIn('membership_id', $membershipIds)
+                ->latest()
+                ->limit(5)
+                ->get();
+        }
+
+        return view('admin.user-detail', compact('user', 'customer', 'transactions', 'memberships', 'userProgress', 'recentBookings'));
     }
 
     public function classes(Request $request)

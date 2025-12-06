@@ -163,8 +163,8 @@
                                         </div>
                                         <h3 class="text-gray-900 text-lg font-bold mb-2">No Active Membership</h3>
                                         <p class="text-gray-600 text-sm mb-4">Get started with a membership plan today!</p>
-                                        <a href="#" class="inline-block px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
-                                            View Plans
+                                        <a href="{{ route('customer.payment.show') }}" class="inline-block px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
+                                            Activate Membership
                                         </a>
                                     </div>
                                 @endif

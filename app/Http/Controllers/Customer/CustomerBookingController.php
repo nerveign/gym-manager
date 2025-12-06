@@ -128,6 +128,30 @@ class CustomerBookingController extends Controller
     }
 
     /**
+     * Check booking availability for a specific trainer, date, and time.
+     */
+    public function checkAvailability(Request $request)
+    {
+        $request->validate([
+            'trainer_id' => 'required|exists:users,id',
+            'date' => 'required|date',
+            'time' => 'required|date_format:H:i',
+        ]);
+
+        $existingBooking = Booking::where('trainer_id', $request->trainer_id)
+                                 ->where('date', $request->date)
+                                 ->where('time', $request->time)
+                                 ->first();
+
+        return response()->json([
+            'available' => !$existingBooking,
+            'message' => $existingBooking 
+                ? 'Trainer sudah dibooking pada tanggal dan jam tersebut. Silakan pilih waktu lain.'
+                : 'Slot booking tersedia.'
+        ]);
+    }
+
+    /**
      * Menghapus booking.
      * (TIDAK DIUBAH)
      */

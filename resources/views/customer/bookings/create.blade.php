@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>New Booking | Customer</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -132,6 +133,8 @@
                                 @error('time')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
+                                {{-- Availability status --}}
+                                <div id="availability-status" class="mt-2 text-sm" style="display: none;"></div>
                             </div>
                         </div>
 
@@ -169,5 +172,166 @@
             </div>
         </div>
     </div>
+
+    {{-- Popup Modal for Booking Conflict --}}
+    <div id="booking-conflict-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"></div>
+
+            <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="flex items-center justify-center flex-shrink-0 w-12 h-12 mx-auto bg-red-100 rounded-full sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900">
+                                Jadwal Tidak Tersedia
+                            </h3>
+                            <div class="mt-2">
+                                <p id="conflict-message" class="text-sm text-gray-500">
+                                    Trainer sudah dibooking pada tanggal dan jam tersebut. Silakan pilih waktu lain.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="closeConflictModal()" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Pilih Waktu Lain
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let availabilityCheckTimeout;
+        
+        // Function to check availability
+        function checkAvailability() {
+            const trainerId = document.getElementById('trainer_id').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const statusDiv = document.getElementById('availability-status');
+
+            if (!trainerId || !date || !time) {
+                statusDiv.style.display = 'none';
+                return;
+            }
+
+            // Clear previous timeout
+            if (availabilityCheckTimeout) {
+                clearTimeout(availabilityCheckTimeout);
+            }
+
+            // Show loading
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'mt-2 text-sm text-gray-500';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengecek ketersediaan...';
+
+            // Delay the check to avoid too many requests
+            availabilityCheckTimeout = setTimeout(() => {
+                fetch('{{ route("customer.bookings.check-availability") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trainer_id: trainerId,
+                        date: date,
+                        time: time
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.available) {
+                        statusDiv.className = 'mt-2 text-sm text-green-600';
+                        statusDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + data.message;
+                    } else {
+                        statusDiv.className = 'mt-2 text-sm text-red-600';
+                        statusDiv.innerHTML = '<i class="fas fa-times-circle mr-2"></i>' + data.message;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    statusDiv.className = 'mt-2 text-sm text-gray-500';
+                    statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Gagal mengecek ketersediaan';
+                });
+            }, 500); // Wait 500ms after user stops typing/selecting
+        }
+
+        // Function to show conflict modal
+        function showConflictModal(message) {
+            document.getElementById('conflict-message').textContent = message;
+            document.getElementById('booking-conflict-modal').classList.remove('hidden');
+        }
+
+        // Function to close conflict modal
+        function closeConflictModal() {
+            document.getElementById('booking-conflict-modal').classList.add('hidden');
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const trainerSelect = document.getElementById('trainer_id');
+            const dateInput = document.getElementById('date');
+            const timeInput = document.getElementById('time');
+            const form = document.querySelector('form');
+
+            // Check availability when inputs change
+            trainerSelect.addEventListener('change', checkAvailability);
+            dateInput.addEventListener('change', checkAvailability);
+            timeInput.addEventListener('change', checkAvailability);
+
+            // Prevent form submission if slot is not available
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const trainerId = trainerSelect.value;
+                const date = dateInput.value;
+                const time = timeInput.value;
+
+                if (!trainerId || !date || !time) {
+                    this.submit();
+                    return;
+                }
+
+                // Double-check availability before submission
+                fetch('{{ route("customer.bookings.check-availability") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trainer_id: trainerId,
+                        date: date,
+                        time: time
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.available) {
+                        // Slot is available, submit the form
+                        form.submit();
+                    } else {
+                        // Slot is not available, show popup
+                        showConflictModal(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // If there's an error checking, allow form submission (fallback to server validation)
+                    form.submit();
+                });
+            });
+        });
+    </script>
 </body>
 </html>

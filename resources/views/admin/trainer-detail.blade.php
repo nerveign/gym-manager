@@ -31,13 +31,15 @@
             <!-- User Profile Section -->
             <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
-                    @if($user->image_url)
-                        <img class="w-8 h-8 rounded-full object-cover" src="{{ $user->image_url }}" alt="{{ $user->name }}">
-                    @else
-                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                            <i class="fas fa-user text-gray-400 text-sm"></i>
-                        </div>
-                    @endif
+                    <a href="{{ route('profile.edit') }}">
+                        @if($user->image_url)
+                            <img class="w-8 h-8 rounded-full object-cover" src="{{ $user->image_url }}" alt="{{ $user->name }}">
+                        @else
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-user text-gray-400 text-sm"></i>
+                            </div>
+                        @endif
+                    </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ $user->name }}</p>
                         <p class="text-xs text-gray-500">Administrator</p>
@@ -57,16 +59,26 @@
         </div>
 
         <!-- Main Content Area -->
-        <div class="flex-1 ml-64">
-            <!-- Scrollable Content -->
-            <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
-                <!-- Back Navigation -->
-                <div class="mb-6">
-                    <a href="{{ route('admin.trainers_management') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        <span>Back to Trainers</span>
+        <div class="flex-1 ml-64 h-screen flex flex-col">
+            <!-- Header with Back Button -->
+            <div class="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm shrink-0 z-20">
+                <div class="flex items-center gap-4">
+                    <a href="{{ route('admin.trainers_management') }}" class="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-indigo-600 transition shadow-sm">
+                        <i class="fas fa-arrow-left text-sm"></i>
                     </a>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900 leading-tight">{{ $trainer->name }}</h1>
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span>#TRAINER-{{ str_pad($trainer->id, 4, '0', STR_PAD_LEFT) }}</span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span>{{ ucfirst($trainer->role) }}</span>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <main class="flex-1 min-h-0 pt-4 pb-8 px-4 overflow-y-auto scroll-container">
 
                 <!-- Trainer Profile Header -->
                 <div class="w-full bg-white rounded-xl shadow-lg border relative overflow-hidden mb-6">

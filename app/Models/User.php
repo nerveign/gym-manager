@@ -45,6 +45,18 @@ class User extends Authenticatable
         return $this->hasOne(Membership::class, 'user_id');
     }
 
+    // Relationship plural untuk controller yang memanggil 'memberships'
+    public function memberships()
+    {
+        return $this->hasMany(Membership::class, 'user_id');
+    }
+
+    // Relationship untuk transactions melalui memberships
+    public function transactions()
+    {
+        return $this->hasManyThrough(Transaction::class, Membership::class, 'user_id', 'membership_id', 'id', 'id');
+    }
+
     // Tambahkan di User.php
     public function enrolledClasses()
     {
@@ -61,6 +73,12 @@ class User extends Authenticatable
     public function userProgress()
     {
         return $this->hasMany(UserProgress::class, 'user_id');
+    }
+
+    // Relationship untuk bookings (trainer bookings)
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'user_id');
     }
 
      public function hasActiveMembership(): bool

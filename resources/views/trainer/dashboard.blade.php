@@ -44,6 +44,15 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
+
+                <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-4">Aktivitas Saya</div>
+                
+                <a href="{{ route('trainer.bookings') }}" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Booking Saya</span>
+                </a>
             </nav>
 
             {{-- User Profile Section --}}
@@ -87,6 +96,106 @@
                         Welcome back, {{ explode(' ', Auth::user()->name)[0] }}!
                     </h1>
                     <p class="text-gray-500">Here's your activity overview and gym updates.</p>
+                </div>
+
+                {{-- Statistics Cards --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {{-- Total Bookings --}}
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Total Bookings</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ $totalBookings ?? 0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Today's Bookings --}}
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Today's Sessions</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ $todayBookings ?? 0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Upcoming Bookings --}}
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-yellow-100 rounded-lg">
+                                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Upcoming Sessions</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ $upcomingBookings ?? 0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Recent Bookings --}}
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Bookings</h3>
+                            <a href="{{ route('trainer.bookings') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                View All
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="divide-y divide-gray-200">
+                        @forelse(($recentBookings ?? []) as $booking)
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            @if($booking->membership->user->profile_photo_path)
+                                                <img class="w-10 h-10 rounded-full object-cover" 
+                                                     src="{{ asset('storage/' . $booking->membership->user->profile_photo_path) }}" 
+                                                     alt="{{ $booking->membership->user->name }}">
+                                            @else
+                                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                                                    <span class="text-white text-sm font-semibold">
+                                                        {{ strtoupper(substr($booking->membership->user->name, 0, 1)) }}
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-900">{{ $booking->membership->user->name }}</p>
+                                            <p class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($booking->date)->format('M d, Y') }} at {{ $booking->time }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm text-gray-500">Duration</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ $booking->duration }} mins</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="p-6 text-center">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-gray-500">No recent bookings yet</p>
+                                <p class="text-sm text-gray-400">Your upcoming sessions will appear here</p>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </main>
         </div>

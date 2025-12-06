@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\EquipmentController;
 use App\Http\Controllers\Customer\CustomerEquipmentController;
 // === TAMBAHKAN CONTROLLER TRAINER CUSTOMER ===
 use App\Http\Controllers\Customer\CustomerTrainerController;
+// === TAMBAHKAN TRAINER CONTROLLER ===
+use App\Http\Controllers\Trainer\TrainerController;
 // ===================================
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -90,6 +92,8 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
     // === BOOKING ROUTES ===
     // Ini akan otomatis membuat rute: index, create, store, show, edit, update, destroy
     Route::resource('bookings', CustomerBookingController::class);
+    // Check booking availability
+    Route::post('/bookings/check-availability', [CustomerBookingController::class, 'checkAvailability'])->name('bookings.check-availability');
     // ======================
 
     // PAYMENT ROUTES untuk aktivasi membership
@@ -113,14 +117,13 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
 // TRAINER ROUTES
 Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')->name('trainer.')->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return view('trainer.dashboard', ['user' => auth()->user()]);
-    })->name('dashboard');
+    Route::get('/dashboard', [TrainerController::class, 'dashboard'])->name('dashboard');
+
+    // Bookings - Aktivitas Saya
+    Route::get('/bookings', [TrainerController::class, 'bookings'])->name('bookings');
 
     // Profile Settings
-    Route::get('/profile', function () {
-        return view('trainer.profile', ['user' => auth()->user()]);
-    })->name('profile.edit');
+    Route::get('/profile', [TrainerController::class, 'edit'])->name('profile.edit');
     
     // Profile Update (untuk form submit)
     Route::put('/profile', function (Request $request) {
