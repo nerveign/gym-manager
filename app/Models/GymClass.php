@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 
 class GymClass extends Model
@@ -9,7 +10,7 @@ class GymClass extends Model
     protected $fillable = [
         'trainer_id',
         'schedule',
-        'capacity',        
+        'capacity',
         'type',
         'description',
     ];
@@ -24,13 +25,19 @@ class GymClass extends Model
     public function members()
     {
         return $this->belongsToMany(User::class, 'class_members', 'class_id', 'user_id')
-                    ->withPivot('status')
-                    ->withTimestamps();
+            ->withPivot('status')
+            ->withTimestamps();
     }
 
-    // Relasi ke class_members
+    // Relasi ke tabel pivot class_members
     public function classMembers()
     {
         return $this->hasMany(ClassMember::class, 'class_id');
+    }
+
+    // [BARU] Relasi ke Agenda Kelas
+    public function agendas()
+    {
+        return $this->hasMany(ClassAgenda::class, 'gym_class_id')->orderBy('order', 'asc');
     }
 }

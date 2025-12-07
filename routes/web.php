@@ -14,6 +14,8 @@ use App\Http\Controllers\Customer\CustomerEquipmentController;
 use App\Http\Controllers\Customer\CustomerTrainerController;
 // === TAMBAHKAN TRAINER CONTROLLER ===
 use App\Http\Controllers\Trainer\TrainerController;
+
+use App\Http\Controllers\Admin\ClassController;
 // ===================================
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -54,7 +56,35 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/users', [AdminDashboardController::class, 'users'])->name('users_management');
     Route::get('/dashboard/trainer', [AdminDashboardController::class, 'trainers'])->name('trainers_management');
     Route::get('/dashboard/booking', [AdminDashboardController::class, 'bookings'])->name('bookings_management');
+
+    // === ROUTE MANAJEMEN KELAS ===
+    // 1. List Kelas (Existing)
     Route::get('/dashboard/classes', [AdminDashboardController::class, 'classes'])->name('classes_management');
+
+    // 2. Create (New)
+    Route::get('/dashboard/classes/create', [ClassController::class, 'create'])->name('classes.create');
+    Route::post('/dashboard/classes', [ClassController::class, 'store'])->name('classes.store');
+
+    // 3. Edit & Update (New)
+    Route::get('/dashboard/classes/{id}/edit', [ClassController::class, 'edit'])->name('classes.edit');
+    Route::put('/dashboard/classes/{id}', [ClassController::class, 'update'])->name('classes.update');
+
+    // 4. Delete (New)
+    Route::delete('/dashboard/classes/{id}', [ClassController::class, 'destroy'])->name('classes.destroy');
+
+    // 5. Detail & Agenda (Existing)
+    Route::get('/dashboard/classes/{id}', [AdminDashboardController::class, 'classDetail'])->name('class.detail');
+    Route::post('/dashboard/classes/{id}/agenda', [AdminDashboardController::class, 'storeAgenda'])->name('class.agenda.store');
+
+    // [BARU] Route Detail Kelas & Progress
+    Route::get('/dashboard/classes/{id}', [AdminDashboardController::class, 'classDetail'])->name('class.detail');
+
+    // [BARU] Route Simpan Agenda (Materi)
+    Route::post('/dashboard/classes/{id}/agenda', [AdminDashboardController::class, 'storeAgenda'])->name('class.agenda.store');
+
+    // [BARU] Rute Update & Delete Agenda
+    Route::put('/dashboard/agenda/{id}', [AdminDashboardController::class, 'updateAgenda'])->name('class.agenda.update');
+    Route::delete('/dashboard/agenda/{id}', [AdminDashboardController::class, 'destroyAgenda'])->name('class.agenda.destroy');
 
     // Detail Pages Routes
     Route::get('/users/{id}', [AdminDashboardController::class, 'userDetail'])->name('user.detail');
@@ -68,13 +98,24 @@ Route::middleware(['auth', 'verified', 'check.role:admin'])->prefix('admin')->na
     Route::get('/dashboard/equipment/{id}/edit', [EquipmentController::class, 'edit'])->name('equipments.edit');
     Route::put('/dashboard/equipment/{id}', [EquipmentController::class, 'update'])->name('equipments.update');
     Route::delete('/dashboard/equipment/{id}', [EquipmentController::class, 'destroy'])->name('equipments.destroy');
-    
+
     Route::get('/dashboard/transactions', [AdminDashboardController::class, 'transactions'])->name('transactions_management');
 });
 
 // CUSTOMER ROUTES
 Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+
+    // [BARU] Halaman List Kelas Saya (Menu Sidebar)
+    Route::get('/my-classes', [CustomerDashboardController::class, 'myClasses'])->name('my-classes');
+
+    // [BARU] Browse & Join Classes
+    Route::get('/browse-classes', [CustomerDashboardController::class, 'browseClasses'])->name('browse-classes');
+    Route::post('/join-class/{id}', [CustomerDashboardController::class, 'joinClass'])->name('join-class');
+
+
+    // [BARU] Route Detail Kelas Customer (Lihat Progress Sendiri)
+    Route::get('/my-classes/{id}', [CustomerDashboardController::class, 'classDetail'])->name('class.detail');
 
     // === EQUIPMENT ROUTES ===
     Route::get('/equipment', [CustomerDashboardController::class, 'equipments'])->name('equipments.index');
@@ -90,9 +131,7 @@ Route::middleware(['auth', 'verified', 'check.role:customer'])->prefix('customer
     Route::resource('progress', CustomerProgressController::class);
 
     // === BOOKING ROUTES ===
-    // Ini akan otomatis membuat rute: index, create, store, show, edit, update, destroy
     Route::resource('bookings', CustomerBookingController::class);
-    // Check booking availability
     Route::post('/bookings/check-availability', [CustomerBookingController::class, 'checkAvailability'])->name('bookings.check-availability');
     // ======================
 
@@ -122,13 +161,21 @@ Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')
     // Bookings - Aktivitas Saya
     Route::get('/bookings', [TrainerController::class, 'bookings'])->name('bookings');
 
+    // [BARU] Halaman List Kelas Saya (Menu Sidebar)
+    Route::get('/my-classes', [TrainerController::class, 'myClasses'])->name('classes');
+
+    // [BARU] Manajemen Kelas & Progress Siswa
+    Route::get('/classes/{id}', [TrainerController::class, 'classDetail'])->name('class.detail');
+    Route::get('/classes/{classId}/student/{userId}/progress', [TrainerController::class, 'studentProgress'])->name('student.progress');
+    Route::post('/classes/{classId}/student/{userId}/progress', [TrainerController::class, 'updateStudentProgress'])->name('student.progress.update');
+
     // Profile Settings
     Route::get('/profile', [TrainerController::class, 'edit'])->name('profile.edit');
-    
+
     // Profile Update (untuk form submit)
     Route::put('/profile', function (Request $request) {
         $user = auth()->user();
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
@@ -137,12 +184,9 @@ Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')
         ]);
 
         if ($request->hasFile('photo')) {
-            // Delete old photo if exists
             if ($user->profile_photo_path) {
                 Storage::delete('public/' . $user->profile_photo_path);
             }
-            
-            // Store new photo
             $path = $request->file('photo')->store('profile-photos', 'public');
             $user->profile_photo_path = $path;
         }
@@ -163,7 +207,6 @@ Route::post('/webhook/payment', [CustomerPaymentController::class, 'webhook'])->
 
 // Essential membership checking route  
 Route::middleware('auth')->group(function () {
-    // Membership force check (for payment page compatibility)
     Route::get('/membership/force-check', [App\Http\Controllers\Customer\MembershipCheckController::class, 'forceCheck'])
         ->name('membership.force-check');
 });

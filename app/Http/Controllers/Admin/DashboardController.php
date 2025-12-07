@@ -9,6 +9,8 @@ use App\Models\Membership;
 use App\Models\User;
 use App\Models\Equipment;
 use App\Models\Transaction;
+use App\Models\ClassMember; // Pastikan Model ini di-import
+use App\Models\ClassAgenda; // Pastikan Model ini di-import
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -21,6 +23,7 @@ class DashboardController extends Controller
 
         $user = auth()->user();
 
+        // Mengambil statistik untuk kartu-kartu di atas
         $stats = [
             'equipment_count' => $this->getEquipmentStats(),
             'customer_count' => $this->getTotalCustomers(),
@@ -30,12 +33,13 @@ class DashboardController extends Controller
             'booking_count' => $this->getTotalBookings()
         ];
 
+        // Mengambil data revenue
         $revenue = [
             'monthly' => $this->getMonthlyRevenue(),
             'total' => $this->getTotalRevenue()
         ];
 
-        // Recent Members
+        // Mengambil 5 Membership terbaru (opsional, jika view membutuhkan)
         $recentMemberships = Membership::with('user')
             ->latest()
             ->take(5)
@@ -51,20 +55,30 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Recent Transactions
-        $recentTransactions = Transaction::with('user')
+        // [PENTING] Mengambil Recent Transactions untuk tabel bawah
+        $recentTransactions = Transaction::with(['user', 'membership.user']) // Eager load relationships
             ->latest()
             ->take(5)
             ->get();
 
-        // === TAMBAHAN: Recent Trainers (Mengatasi Error Undefined Variable) ===
+        // [PENTING] Mengambil Recent Trainers untuk list di sebelah kanan
+        // Ini yang menyebabkan error "Undefined variable $recentTrainers" jika tidak ada
         $recentTrainers = User::where('role', 'trainer')
             ->latest()
             ->take(5)
             ->get();
 
-        return view('admin.dashboard', compact('user', 'stats', 'revenue', 'recentMemberships', 'recentTransactions', 'recentTrainers'));
+        return view('admin.dashboard', compact(
+            'user',
+            'stats',
+            'revenue',
+            'recentMemberships',
+            'recentTransactions',
+            'recentTrainers' // Pastikan variabel ini dikirim
+        ));
     }
+
+    // ... Method lainnya (users, userDetail, classes, equipments, trainers, transactions, bookings, classDetail, storeAgenda, trainerDetail) biarkan seperti sebelumnya ...
 
     public function users(Request $request)
     {
@@ -101,11 +115,11 @@ class DashboardController extends Controller
         $transactions = $customer->transactions()->latest()->get();
         $memberships = $customer->memberships;
         $userProgress = $customer->userProgress;
-        
+
         // Ambil recent bookings untuk customer ini melalui memberships
         $membershipIds = $customer->memberships->pluck('id');
         $recentBookings = collect();
-        
+
         if ($membershipIds->count() > 0) {
             $recentBookings = Booking::with('trainer')
                 ->whereIn('membership_id', $membershipIds)
@@ -122,12 +136,56 @@ class DashboardController extends Controller
         $user = auth()->user();
         $query = GymClass::with('trainer');
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', "%{$request->search}%");
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                // Cari berdasarkan Tipe Kelas ATAU Nama Trainer
+                $q->where('type', 'like', "%{$search}%")
+                    ->orWhereHas('trainer', function ($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
 
         $classes = $query->paginate(10);
         return view('admin.classes', compact('user', 'classes'));
+    }
+
+    /**
+     * [BARU] Menampilkan Detail Kelas & Progress Member
+     */
+    public function classDetail($id)
+    {
+        // 1. Ambil data kelas beserta trainer, agenda, dan members
+        $gymClass = GymClass::with(['trainer', 'agendas', 'classMembers.user'])->findOrFail($id);
+
+        // 2. Hitung progress untuk SETIAP member di kelas ini
+        foreach ($gymClass->classMembers as $member) {
+            // Kita simpan hasil perhitungan ke properti sementara object member
+            $member->current_progress = $member->calculateProgress();
+        }
+
+        return view('admin.class-detail', compact('gymClass'));
+    }
+
+    /**
+     * [BARU] Menyimpan Agenda/Materi Baru
+     */
+    public function storeAgenda(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'order' => 'nullable|integer|min:1'
+        ]);
+
+        ClassAgenda::create([
+            'gym_class_id' => $id,
+            'title' => $request->title,
+            'order' => $request->order ?? 1,
+        ]);
+
+        return redirect()->route('admin.class.detail', $id)
+            ->with('success', 'Agenda berhasil ditambahkan!');
     }
 
     public function equipments(Request $request)
@@ -208,6 +266,37 @@ class DashboardController extends Controller
         $bookings = $query->orderBy('date', 'desc')->paginate(10);
 
         return view('admin.bookings', compact('user', 'bookings'));
+    }
+
+    /**
+     * [BARU] Update Agenda
+     */
+    public function updateAgenda(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'order' => 'required|integer|min:1'
+        ]);
+
+        $agenda = ClassAgenda::findOrFail($id);
+
+        $agenda->update([
+            'title' => $request->title,
+            'order' => $request->order
+        ]);
+
+        return back()->with('success', 'Materi berhasil diperbarui!');
+    }
+
+    /**
+     * [BARU] Hapus Agenda
+     */
+    public function destroyAgenda($id)
+    {
+        $agenda = ClassAgenda::findOrFail($id);
+        $agenda->delete();
+
+        return back()->with('success', 'Materi berhasil dihapus!');
     }
 
     public function trainerDetail($id)

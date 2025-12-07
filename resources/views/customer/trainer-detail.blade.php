@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,28 +8,30 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body class="bg-gray-100">
     <div class="flex h-screen">
         {{-- Fixed Sidebar --}}
         <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
             <x-dashboard-header name="{{ $user->name }}" />
-            
+
             <nav class="mt-6">
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400">Main</div>
-                
+
                 <x-nav-item text="Home" color="text-gray-600" src="home.svg" location="customer.dashboard" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Aktivitas Saya</div>
-                
+
                 <x-nav-item text="Progress Tracking" color="text-gray-600" src="barbell.svg" location="customer.progress.index" />
                 <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" />
+                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="customer.my-classes" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
-                
+
                 <x-nav-item text="Trainer List" color="text-blue-600" src="user.svg" location="customer.trainers.index" style="bg-blue-50 border-r-4 border-blue-500" />
                 <x-nav-item text="Equipment List" color="text-gray-600" src="equipment.svg" location="customer.equipments.index" />
             </nav>
-            
+
             {{-- User Profile Section --}}
             <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
@@ -50,8 +53,8 @@
                     <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
                         @csrf
                     </form>
-                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();" 
-                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                         <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 mr-1">
                         <span>Logout</span>
                     </button>
@@ -73,7 +76,7 @@
 
                 {{-- Trainer Profile Header --}}
                 <div class="w-full bg-white rounded-xl shadow-lg border relative overflow-hidden mb-6">
-                    
+
                     {{-- Banner --}}
                     <div class="relative overflow-hidden rounded-t-xl h-36" style="background: #dbeafe;">
                         <div class="absolute top-4 right-4">
@@ -86,10 +89,10 @@
 
                     {{-- Profile Card Content --}}
                     <div class="relative flex flex-col md:flex-row p-6 pt-0">
-                        
+
                         {{-- Left Column (Profile Summary) --}}
                         <div class="w-full md:w-1/3 text-center md:text-left -mt-16 md:-mt-12 md:pr-6">
-                            
+
                             <div class="flex flex-col items-center md:items-start space-y-4">
                                 @if($trainer->image_url)
                                 <img class="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover" src="{{ $trainer->image_url }}" alt="{{ $trainer->name }}">
@@ -98,10 +101,10 @@
                                     <i class="fas fa-user text-gray-400 text-2xl"></i>
                                 </div>
                                 @endif
-                                
+
                                 <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ $trainer->name }}</h1>
                                 <p class="text-sm text-gray-500">Personal Trainer</p>
-                                
+
                                 {{-- Status Badge --}}
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                                     <i class="fas fa-user-check mr-1.5"></i>
@@ -109,10 +112,10 @@
                                 </span>
                             </div>
                         </div>
-                        
+
                         {{-- Right Column (Trainer Cards) --}}
                         <div class="w-full md:w-2/3 md:pl-6 border-t md:border-t-0 md:border-l pt-8 md:pt-4 mt-6 md:mt-0">
-                            
+
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {{-- Trainer Information Card --}}
                                 <div class="bg-white rounded-lg border p-4">
@@ -246,4 +249,5 @@
         </div>
     </div>
 </body>
+
 </html>

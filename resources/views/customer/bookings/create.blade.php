@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body class="bg-gray-50 overflow-hidden">
     <div class="flex h-screen">
         {{-- ================= SIDEBAR ================= --}}
@@ -22,6 +24,7 @@
                 <x-nav-item text="Progress Tracking" color="text-gray-600" src="barbell.svg" location="customer.progress.index" />
                 {{-- Menu Active --}}
                 <x-nav-item text="My Bookings" color="text-zinc-700" src="calendar.svg" location="customer.bookings.index" style="bg-blue-50 border-r-4 border-blue-500" />
+                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="customer.my-classes" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
                 <x-nav-item text="Trainer List" color="text-gray-600" src="user.svg" location="customer.trainers.index" />
@@ -31,9 +34,9 @@
             <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
                     <a href="{{ route('profile.edit') }}">
-                        <img class="w-8 h-8 rounded-full object-cover" 
-                             src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}" 
-                             alt="{{ auth()->user()->name }}">
+                        <img class="w-8 h-8 rounded-full object-cover"
+                            src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}"
+                            alt="{{ auth()->user()->name }}">
                     </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</p>
@@ -53,13 +56,13 @@
 
         {{-- ================= MAIN CONTENT ================= --}}
         <div class="flex-1 ml-64 h-screen flex flex-col">
-            
+
             {{-- 1. HEADER BAR (Sesuai Referensi) --}}
             <div class="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm shrink-0 z-20">
                 <div class="flex items-center gap-4">
                     {{-- Tombol Kembali --}}
-                    <a href="{{ route('customer.bookings.index') }}" 
-                       class="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-blue-600 transition shadow-sm">
+                    <a href="{{ route('customer.bookings.index') }}"
+                        class="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-blue-600 transition shadow-sm">
                         <i class="fas fa-arrow-left text-sm"></i>
                     </a>
                     <h1 class="text-xl font-bold text-gray-900">Buat Booking Baru</h1>
@@ -93,33 +96,33 @@
                         {{-- INPUT 1: TRAINER (Full Width) --}}
                         <div class="mb-6">
                             <label for="trainer_id" class="block text-sm font-medium text-gray-700 mb-2">Pilih Trainer</label>
-                            <select id="trainer_id" name="trainer_id" 
-                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm" required>
+                            <select id="trainer_id" name="trainer_id"
+                                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm" required>
                                 <option value="" disabled selected>-- Pilih Trainer Profesional --</option>
                                 @foreach($trainers as $trainer)
-                                    <option value="{{ $trainer->id }}" {{ old('trainer_id') == $trainer->id ? 'selected' : '' }}>
-                                        {{ $trainer->name }}
-                                    </option>
+                                <option value="{{ $trainer->id }}" {{ old('trainer_id') == $trainer->id ? 'selected' : '' }}>
+                                    {{ $trainer->name }}
+                                </option>
                                 @endforeach
                             </select>
                             @error('trainer_id')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- GRID 2 KOLOM: DATE & TIME --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            
+
                             {{-- Input Date --}}
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Pilih Tanggal</label>
                                 <input type="date" id="date" name="date"
-                                       value="{{ old('date') }}"
-                                       min="{{ now()->format('Y-m-d') }}"
-                                       class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                                       required>
+                                    value="{{ old('date') }}"
+                                    min="{{ now()->format('Y-m-d') }}"
+                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                    required>
                                 @error('date')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -127,11 +130,11 @@
                             <div>
                                 <label for="time" class="block text-sm font-medium text-gray-700 mb-2">Pilih Jam</label>
                                 <input type="time" id="time" name="time"
-                                       value="{{ old('time') }}"
-                                       class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                                       required>
+                                    value="{{ old('time') }}"
+                                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                    required>
                                 @error('time')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                                 {{-- Availability status --}}
                                 <div id="availability-status" class="mt-2 text-sm" style="display: none;"></div>
@@ -142,26 +145,26 @@
                         <div class="mb-8">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Durasi Sesi</label>
                             <div class="relative">
-                                <input type="text" value="60 Menit" disabled 
-                                       class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm pl-10">
+                                <input type="text" value="60 Menit" disabled
+                                    class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm pl-10">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="far fa-clock text-gray-400"></i>
                                 </div>
                             </div>
                             <p class="text-xs text-gray-500 mt-1">*Durasi standar sesi latihan personal adalah 60 menit.</p>
-                            
+
                             {{-- Hidden input durasi (wajib ada agar data terkirim) --}}
                             <input type="hidden" name="duration" value="60">
                         </div>
 
                         {{-- ACTION BUTTONS (Sesuai Referensi) --}}
                         <div class="flex items-center justify-end gap-4 border-t pt-6">
-                            <a href="{{ route('customer.bookings.index') }}" 
-                               class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            <a href="{{ route('customer.bookings.index') }}"
+                                class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                                 Batal
                             </a>
-                            <button type="submit" 
-                                    class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-2">
+                            <button type="submit"
+                                class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-2">
                                 <i class="fas fa-check"></i>
                                 Booking Sekarang
                             </button>
@@ -209,7 +212,7 @@
 
     <script>
         let availabilityCheckTimeout;
-        
+
         // Function to check availability
         function checkAvailability() {
             const trainerId = document.getElementById('trainer_id').value;
@@ -235,33 +238,33 @@
             // Delay the check to avoid too many requests
             availabilityCheckTimeout = setTimeout(() => {
                 fetch('{{ route("customer.bookings.check-availability") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        trainer_id: trainerId,
-                        date: date,
-                        time: time
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            trainer_id: trainerId,
+                            date: date,
+                            time: time
+                        })
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.available) {
-                        statusDiv.className = 'mt-2 text-sm text-green-600';
-                        statusDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + data.message;
-                    } else {
-                        statusDiv.className = 'mt-2 text-sm text-red-600';
-                        statusDiv.innerHTML = '<i class="fas fa-times-circle mr-2"></i>' + data.message;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    statusDiv.className = 'mt-2 text-sm text-gray-500';
-                    statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Gagal mengecek ketersediaan';
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.available) {
+                            statusDiv.className = 'mt-2 text-sm text-green-600';
+                            statusDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + data.message;
+                        } else {
+                            statusDiv.className = 'mt-2 text-sm text-red-600';
+                            statusDiv.innerHTML = '<i class="fas fa-times-circle mr-2"></i>' + data.message;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        statusDiv.className = 'mt-2 text-sm text-gray-500';
+                        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Gagal mengecek ketersediaan';
+                    });
             }, 500); // Wait 500ms after user stops typing/selecting
         }
 
@@ -303,35 +306,36 @@
 
                 // Double-check availability before submission
                 fetch('{{ route("customer.bookings.check-availability") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        trainer_id: trainerId,
-                        date: date,
-                        time: time
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            trainer_id: trainerId,
+                            date: date,
+                            time: time
+                        })
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.available) {
-                        // Slot is available, submit the form
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.available) {
+                            // Slot is available, submit the form
+                            form.submit();
+                        } else {
+                            // Slot is not available, show popup
+                            showConflictModal(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // If there's an error checking, allow form submission (fallback to server validation)
                         form.submit();
-                    } else {
-                        // Slot is not available, show popup
-                        showConflictModal(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // If there's an error checking, allow form submission (fallback to server validation)
-                    form.submit();
-                });
+                    });
             });
         });
     </script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,10 @@
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body class="bg-gray-100">
     <div class="flex h-screen">
-        
+
         {{-- ================= SIDEBAR ================= --}}
         <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
             <x-dashboard-header name="{{ auth()->user()->name }}" />
@@ -24,6 +26,7 @@
                 <x-nav-item text="Progress Tracking" color="text-gray-600" src="barbell.svg" location="customer.progress.index" />
                 {{-- Menu Active --}}
                 <x-nav-item text="My Bookings" color="text-zinc-700" src="calendar.svg" location="customer.bookings.index" style="bg-blue-50 border-r-4 border-blue-500" />
+                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="customer.my-classes" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
                 <x-nav-item text="Trainer List" color="text-gray-600" src="user.svg" location="customer.trainers.index" />
@@ -33,9 +36,9 @@
             <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
                     <a href="{{ route('profile.edit') }}">
-                        <img class="w-8 h-8 rounded-full object-cover" 
-                             src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}" 
-                             alt="{{ auth()->user()->name }}">
+                        <img class="w-8 h-8 rounded-full object-cover"
+                            src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}"
+                            alt="{{ auth()->user()->name }}">
                     </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</p>
@@ -56,14 +59,14 @@
         {{-- ================= MAIN CONTENT ================= --}}
         <div class="flex-1 ml-64">
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
-                
+
                 {{-- 1. HEADER HALAMAN --}}
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-900">My Bookings Management</h2>
-                    
+
                     {{-- Tombol New Booking (Biru) --}}
-                    <a href="{{ route('customer.bookings.create') }}" 
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm font-medium flex items-center gap-2">
+                    <a href="{{ route('customer.bookings.create') }}"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm font-medium flex items-center gap-2">
                         <i class="fas fa-plus"></i> New Booking
                     </a>
                 </div>
@@ -73,36 +76,36 @@
                     <form method="GET" action="{{ route('customer.bookings.index') }}" class="flex gap-4">
                         <div class="flex-1">
                             <input type="text"
-                                   name="search"
-                                   value="{{ request('search') }}"
-                                   placeholder="Search booking by trainer name..."
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                name="search"
+                                value="{{ request('search') }}"
+                                placeholder="Search booking by trainer name..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                         </div>
                         <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                             Search
                         </button>
-                        
+
                         {{-- Tombol Clear (Muncul jika ada pencarian) --}}
                         @if(request('search'))
-                            <a href="{{ route('customer.bookings.index') }}" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium flex items-center">
-                                Clear
-                            </a>
+                        <a href="{{ route('customer.bookings.index') }}" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium flex items-center">
+                            Clear
+                        </a>
                         @endif
                     </form>
                 </div>
 
                 {{-- Alert Sukses --}}
                 @if(session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
-                        <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
-                    </div>
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                </div>
                 @endif
 
                 {{-- Alert Error --}}
                 @if(session('error'))
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
-                    </div>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
+                </div>
                 @endif
 
                 {{-- 3. TABEL DATA LIST --}}
@@ -121,18 +124,18 @@
                             <tbody class="divide-y divide-gray-200">
                                 @forelse($bookings as $booking)
                                 <tr class="hover:bg-gray-50 transition-colors duration-200 group">
-                                    
+
                                     {{-- Kolom 1: Trainer --}}
                                     <td class="px-6 py-4">
                                         <div class="flex items-center">
                                             @if($booking->trainer && $booking->trainer->image_url)
-                                                <img class="w-10 h-10 rounded-full object-cover mr-3 border border-gray-200" 
-                                                     src="{{ $booking->trainer->image_url }}" 
-                                                     alt="{{ $booking->trainer->name }}">
+                                            <img class="w-10 h-10 rounded-full object-cover mr-3 border border-gray-200"
+                                                src="{{ $booking->trainer->image_url }}"
+                                                alt="{{ $booking->trainer->name }}">
                                             @else
-                                                <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3 text-indigo-600 font-bold border border-indigo-200">
-                                                    {{ substr($booking->trainer->name ?? 'T', 0, 1) }}
-                                                </div>
+                                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3 text-indigo-600 font-bold border border-indigo-200">
+                                                {{ substr($booking->trainer->name ?? 'T', 0, 1) }}
+                                            </div>
                                             @endif
                                             <div>
                                                 <p class="font-medium text-gray-900 group-hover:text-blue-600 transition">
@@ -142,7 +145,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    
+
                                     {{-- Kolom 2: Date & Time --}}
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         <div class="flex flex-col">
@@ -170,10 +173,10 @@
 
                                     {{-- Kolom 5: Actions --}}
                                     <td class="px-6 py-4 text-right">
-                                        <button type="button" 
-                                                onclick="confirmDelete('{{ route('customer.bookings.destroy', $booking->id) }}')"
-                                                class="text-red-600 hover:text-red-800 font-medium text-sm transition flex items-center gap-1 justify-end ml-auto" 
-                                                title="Cancel Booking">
+                                        <button type="button"
+                                            onclick="confirmDelete('{{ route('customer.bookings.destroy', $booking->id) }}')"
+                                            class="text-red-600 hover:text-red-800 font-medium text-sm transition flex items-center gap-1 justify-end ml-auto"
+                                            title="Cancel Booking">
                                             <i class="fas fa-trash-alt"></i> Cancel
                                         </button>
                                     </td>
@@ -188,15 +191,15 @@
                                             <p class="font-medium text-gray-900">No bookings found</p>
                                             <p class="text-sm text-gray-500 mt-1 mb-4">
                                                 @if(request('search'))
-                                                    No results for "{{ request('search') }}"
+                                                No results for "{{ request('search') }}"
                                                 @else
-                                                    You haven't scheduled any sessions yet.
+                                                You haven't scheduled any sessions yet.
                                                 @endif
                                             </p>
                                             @if(!request('search'))
-                                                <a href="{{ route('customer.bookings.create') }}" class="text-blue-600 hover:underline text-sm font-medium">
-                                                    Book your first session now
-                                                </a>
+                                            <a href="{{ route('customer.bookings.create') }}" class="text-blue-600 hover:underline text-sm font-medium">
+                                                Book your first session now
+                                            </a>
                                             @endif
                                         </div>
                                     </td>
@@ -209,9 +212,9 @@
 
                 {{-- Pagination --}}
                 @if ($bookings instanceof \Illuminate\Pagination\LengthAwarePaginator && $bookings->hasPages())
-                    <div class="mt-6">
-                        {{ $bookings->links() }}
-                    </div>
+                <div class="mt-6">
+                    {{ $bookings->links() }}
+                </div>
                 @endif
 
             </main>
@@ -260,4 +263,5 @@
         }
     </script>
 </body>
+
 </html>

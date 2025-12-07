@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body class="bg-gray-100">
     <div class="flex h-screen">
         {{-- Fixed Sidebar --}}
@@ -25,6 +27,7 @@
 
                 {{-- Nav-Item untuk My Bookings --}}
                 <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" />
+                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="customer.my-classes" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
                 {{-- Nav-Item Trainer List --}}
@@ -129,9 +132,9 @@
                                     <td class="px-6 py-4">
                                         @php
                                         $conditionClass = match($equipment->condition) {
-                                            'Baik', 'Baru' => 'bg-green-100 text-green-800',
-                                            'Rusak' => 'bg-red-100 text-red-800',
-                                            default => 'bg-yellow-100 text-yellow-800'
+                                        'Baik', 'Baru' => 'bg-green-100 text-green-800',
+                                        'Rusak' => 'bg-red-100 text-red-800',
+                                        default => 'bg-yellow-100 text-yellow-800'
                                         };
                                         @endphp
                                         <span class="px-2 py-1 text-xs font-medium rounded-full {{ $conditionClass }}">
@@ -166,4 +169,5 @@
         </div>
     </div>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,10 @@
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body class="bg-gray-100">
     <div class="flex h-screen">
-        
+
         {{-- ================= SIDEBAR ================= --}}
         <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
             <x-dashboard-header name="{{ auth()->user()->name }}" />
@@ -24,6 +26,7 @@
                 {{-- Menu Active --}}
                 <x-nav-item text="Progress Tracking" color="text-zinc-700" src="barbell.svg" location="customer.progress.index" style="bg-blue-50 border-r-4 border-blue-500" />
                 <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" />
+                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="customer.my-classes" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
                 <x-nav-item text="Trainer List" color="text-gray-600" src="user.svg" location="customer.trainers.index" />
@@ -33,9 +36,9 @@
             <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
                 <div class="flex items-center">
                     <a href="{{ route('profile.edit') }}">
-                        <img class="w-8 h-8 rounded-full object-cover" 
-                             src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}" 
-                             alt="{{ auth()->user()->name }}">
+                        <img class="w-8 h-8 rounded-full object-cover"
+                            src="{{ auth()->user()->image_url ?? asset('images/default-user.png') }}"
+                            alt="{{ auth()->user()->name }}">
                     </a>
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</p>
@@ -56,15 +59,15 @@
         {{-- ================= MAIN CONTENT ================= --}}
         <div class="flex-1 ml-64">
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
-                
+
                 {{-- 1. HEADER HALAMAN (Sesuai Referensi) --}}
                 <div class="flex justify-between items-center mb-6">
                     {{-- Judul di Kiri --}}
                     <h2 class="text-2xl font-bold text-gray-900">Progress Tracking Management</h2>
-                    
+
                     {{-- Tombol Tambah di Kanan (Biru) --}}
-                    <a href="{{ route('customer.progress.create') }}" 
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm font-medium flex items-center gap-2">
+                    <a href="{{ route('customer.progress.create') }}"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm font-medium flex items-center gap-2">
                         <i class="fas fa-plus"></i> Tambah Progress
                     </a>
                 </div>
@@ -74,27 +77,27 @@
                     <form method="GET" action="{{ route('customer.progress.index') }}" class="flex gap-4">
                         <div class="flex-1">
                             <input type="text"
-                                   name="search"
-                                   value="{{ request('search') }}"
-                                   placeholder="Search progress by exercise name or description..."
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                name="search"
+                                value="{{ request('search') }}"
+                                placeholder="Search progress by exercise name or description..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                         </div>
                         <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                             Search
                         </button>
                         @if(request('search'))
-                            <a href="{{ route('customer.progress.index') }}" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium flex items-center">
-                                Clear
-                            </a>
+                        <a href="{{ route('customer.progress.index') }}" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium flex items-center">
+                            Clear
+                        </a>
                         @endif
                     </form>
                 </div>
 
                 {{-- Alert Sukses --}}
                 @if(session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
-                        <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
-                    </div>
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                </div>
                 @endif
 
                 {{-- 3. TABEL DATA LIST (Menggantikan Card View) --}}
@@ -113,7 +116,7 @@
                             <tbody class="divide-y divide-gray-200">
                                 @forelse($progress as $item)
                                 <tr class="hover:bg-gray-50 transition-colors duration-200 group">
-                                    
+
                                     {{-- Kolom 1: Exercise (Mirip style kolom Equipment Name) --}}
                                     <td class="px-6 py-4">
                                         <div class="flex items-center">
@@ -129,7 +132,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    
+
                                     {{-- Kolom 2: Duration (Mirip style kolom Brand/Condition) --}}
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-200">
@@ -140,9 +143,9 @@
                                     {{-- Kolom 3: Date (Mirip style kolom Last Updated) --}}
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         @if($item->created_at)
-                                            {{ $item->created_at->format('d M Y') }}
+                                        {{ $item->created_at->format('d M Y') }}
                                         @else
-                                            <span class="text-gray-400">-</span>
+                                        <span class="text-gray-400">-</span>
                                         @endif
                                     </td>
 
@@ -150,14 +153,14 @@
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex items-center justify-end gap-3">
                                             {{-- Tombol Edit --}}
-                                            <a href="{{ route('customer.progress.edit', $item->id) }}" 
-                                               class="text-blue-600 hover:text-blue-800 font-medium text-sm transition flex items-center gap-1">
+                                            <a href="{{ route('customer.progress.edit', $item->id) }}"
+                                                class="text-blue-600 hover:text-blue-800 font-medium text-sm transition flex items-center gap-1">
                                                 <i class="fas fa-edit"></i> Edit
                                             </a>
                                             {{-- Tombol Delete --}}
-                                            <button type="button" 
-                                                    onclick="confirmDelete('{{ route('customer.progress.destroy', $item->id) }}')"
-                                                    class="text-red-600 hover:text-red-800 font-medium text-sm transition flex items-center gap-1">
+                                            <button type="button"
+                                                onclick="confirmDelete('{{ route('customer.progress.destroy', $item->id) }}')"
+                                                class="text-red-600 hover:text-red-800 font-medium text-sm transition flex items-center gap-1">
                                                 <i class="fas fa-trash-alt"></i> Delete
                                             </button>
                                         </div>
@@ -173,9 +176,9 @@
                                             <p class="font-medium text-gray-900">No progress data found</p>
                                             <p class="text-sm text-gray-500 mt-1">
                                                 @if(request('search'))
-                                                    No results for "{{ request('search') }}"
+                                                No results for "{{ request('search') }}"
                                                 @else
-                                                    Start tracking your fitness journey today!
+                                                Start tracking your fitness journey today!
                                                 @endif
                                             </p>
                                         </div>
@@ -241,4 +244,5 @@
         }
     </script>
 </body>
+
 </html>

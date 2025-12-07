@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body class="bg-gray-100">
     <div class="flex h-screen">
         {{-- Fixed Sidebar --}}
@@ -25,6 +27,7 @@
 
                 {{-- Nav-Item untuk My Bookings --}}
                 <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="customer.bookings.index" />
+                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="customer.my-classes" />
 
                 <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">Info Gym</div>
 
@@ -71,11 +74,10 @@
             {{-- Scrollable Content --}}
             <main class="pt-4 pb-8 px-4 h-screen overflow-y-auto scroll-container">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">Trainers Management</h2>
-                
-                <x-search-bar 
-                    action="{{ route('customer.trainers.index') }}" 
-                    placeholder="Search trainers by name, email, or phone..."
-                />
+
+                <x-search-bar
+                    action="{{ route('customer.trainers.index') }}"
+                    placeholder="Search trainers by name, email, or phone..." />
 
                 {{-- All Trainers Table --}}
                 <div class="bg-white rounded-xl border">
@@ -135,11 +137,11 @@
                     nextPageUrl="{{ $trainers->nextPageUrl() }}"
                     lastPage="{{ $trainers->lastPage() }}"
                     currentPage="{{ $trainers->currentPage() }}"
-                    model="trainers"
-                />
+                    model="trainers" />
 
             </main>
         </div>
     </div>
 </body>
+
 </html>
