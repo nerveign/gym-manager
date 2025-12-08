@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\User;
-use App\Models\GymClass; // Pastikan import ini ada
-use App\Models\ClassAgenda; // Pastikan import ini ada
-use App\Models\MemberClassProgress; // Pastikan import ini ada
+use App\Models\GymClass;
+use App\Models\ClassAgenda;
+use App\Models\MemberClassProgress;
+use App\Models\Equipment; // Import Model Equipment
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -43,13 +44,11 @@ class TrainerController extends Controller
             ->count();
 
         // --- 3. GABUNGKAN KEDUANYA UNTUK STATISTIK ---
-        // Ini yang akan ditampilkan di card "Today's Sessions" dan "Upcoming Sessions"
         $todaySessions = $todayBookings + $todayClasses;
         $upcomingSessions = $upcomingBookings + $upcomingClassesCount;
 
         // Data List untuk tampilan bawah
         $upcomingClasses = GymClass::where('trainer_id', $user->id)
-            // ->where('schedule', '>=', now()) // Filter dimatikan dulu agar list tetap muncul saat testing
             ->orderBy('schedule', 'desc')
             ->limit(5)
             ->get();
@@ -64,8 +63,8 @@ class TrainerController extends Controller
             'user',
             'totalBookings',
             'totalClasses',
-            'todaySessions',    // [BARU] Kirim variabel gabungan
-            'upcomingSessions', // [BARU] Kirim variabel gabungan
+            'todaySessions',
+            'upcomingSessions',
             'upcomingClasses',
             'recentBookings'
         ));
@@ -95,7 +94,7 @@ class TrainerController extends Controller
             $query->whereDate('date', $request->date);
         }
 
-        // Filter by status (upcoming, today, past)
+        // Filter by status
         if ($request->filled('status')) {
             switch ($request->status) {
                 case 'today':
@@ -118,15 +117,14 @@ class TrainerController extends Controller
     }
 
     /**
-     * [BARU] Menampilkan daftar semua kelas milik Trainer
+     * Menampilkan daftar semua kelas milik Trainer
      */
     public function myClasses(): View
     {
         $user = auth()->user();
 
-        // Ambil semua kelas, urutkan dari jadwal terbaru/mendatang
         $classes = GymClass::where('trainer_id', $user->id)
-            ->withCount('classMembers') // Hitung jumlah siswa
+            ->withCount('classMembers')
             ->orderBy('schedule', 'desc')
             ->paginate(10);
 
@@ -134,13 +132,12 @@ class TrainerController extends Controller
     }
 
     /**
-     * [BARU] Halaman Detail Kelas untuk Trainer
+     * Halaman Detail Kelas untuk Trainer
      */
     public function classDetail($id): View
     {
         $user = auth()->user();
 
-        // Ambil kelas, pastikan milik trainer yang sedang login
         $gymClass = GymClass::where('id', $id)
             ->where('trainer_id', $user->id)
             ->with(['agendas', 'classMembers.user'])
@@ -155,18 +152,16 @@ class TrainerController extends Controller
     }
 
     /**
-     * [BARU] Halaman Form Checklist Progress Siswa
+     * Halaman Form Checklist Progress Siswa
      */
     public function studentProgress($classId, $userId): View
     {
         $user = auth()->user();
 
-        // Validasi akses kelas
         $gymClass = GymClass::where('id', $classId)
             ->where('trainer_id', $user->id)
             ->firstOrFail();
 
-        // Ambil data siswa di kelas tersebut
         $studentMember = $gymClass->classMembers()
             ->where('user_id', $userId)
             ->with('user')
@@ -174,7 +169,6 @@ class TrainerController extends Controller
 
         $agendas = $gymClass->agendas;
 
-        // Ambil ID agenda yang SUDAH selesai oleh user ini
         $completedAgendaIds = MemberClassProgress::where('user_id', $userId)
             ->whereIn('class_agenda_id', $agendas->pluck('id'))
             ->pluck('class_agenda_id')
@@ -184,22 +178,18 @@ class TrainerController extends Controller
     }
 
     /**
-     * [BARU] Proses Simpan Progress Siswa
+     * Proses Simpan Progress Siswa
      */
     public function updateStudentProgress(Request $request, $classId, $userId)
     {
         $user = auth()->user();
         $gymClass = GymClass::where('id', $classId)->where('trainer_id', $user->id)->firstOrFail();
 
-        // Ambil agenda yang dicentang dari form
-        $submittedAgendas = $request->completed_agendas ?? []; // Array ID agenda
-
-        // Ambil semua agenda yang ada di kelas ini
+        $submittedAgendas = $request->completed_agendas ?? [];
         $allAgendaIds = $gymClass->agendas->pluck('id')->toArray();
 
         foreach ($allAgendaIds as $agendaId) {
             if (in_array($agendaId, $submittedAgendas)) {
-                // Jika dicentang, pastikan data ada di database
                 MemberClassProgress::firstOrCreate(
                     [
                         'user_id' => $userId,
@@ -211,14 +201,12 @@ class TrainerController extends Controller
                     ]
                 );
             } else {
-                // Jika TIDAK dicentang, hapus data dari database (uncheck)
                 MemberClassProgress::where('user_id', $userId)
                     ->where('class_agenda_id', $agendaId)
                     ->delete();
             }
         }
 
-        // Recalculate progress untuk update status lulus otomatis
         $member = $gymClass->classMembers()->where('user_id', $userId)->first();
         if ($member) {
             $member->calculateProgress();
@@ -234,5 +222,59 @@ class TrainerController extends Controller
     {
         $user = auth()->user();
         return view('trainer.profile.edit', compact('user'));
+    }
+
+    /**
+     * Update Profile Logic (Biodata Only - Tanpa Foto)
+     */
+    public function update(Request $request)
+    {
+        $user = auth()->user();
+
+        // Validasi input (Hapus validasi image)
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'specialty' => 'nullable|string|max:100',
+            'experience_years' => 'nullable|integer|min:0|max:50',
+            'bio' => 'nullable|string|max:1000',
+        ]);
+
+        // Langsung update data text
+        $user->update($validated);
+
+        return redirect()->route('trainer.profile.edit')->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    /**
+     * Menampilkan daftar equipment untuk Trainer.
+     */
+    public function equipments(Request $request): View
+    {
+        $user = auth()->user();
+        $query = Equipment::query();
+
+        // Fitur Search
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where('equipment_name', 'like', "%{$searchTerm}%")
+                ->orWhere('brand', 'like', "%{$searchTerm}%");
+        }
+
+        $equipments = $query->latest()->paginate(10);
+
+        return view('trainer.equipments', compact('user', 'equipments'));
+    }
+
+    /**
+     * Menampilkan detail equipment spesifik.
+     */
+    public function equipmentDetail($id): View
+    {
+        $user = auth()->user();
+        $equipment = Equipment::findOrFail($id);
+        
+        return view('trainer.equipment-detail', compact('user', 'equipment'));
     }
 }

@@ -169,6 +169,12 @@ Route::middleware(['auth', 'verified', 'check.role:trainer'])->prefix('trainer')
     Route::get('/classes/{classId}/student/{userId}/progress', [TrainerController::class, 'studentProgress'])->name('student.progress');
     Route::post('/classes/{classId}/student/{userId}/progress', [TrainerController::class, 'updateStudentProgress'])->name('student.progress.update');
 
+    // =======================================================================
+    // [BARU] Route Detail Equipment Trainer (ADDED HERE)
+    // =======================================================================
+    Route::get('/equipments', [TrainerController::class, 'equipments'])->name('equipments.index');
+    Route::get('/equipments/{id}', [TrainerController::class, 'equipmentDetail'])->name('equipments.show');
+
     // Profile Settings
     Route::get('/profile', [TrainerController::class, 'edit'])->name('profile.edit');
 
