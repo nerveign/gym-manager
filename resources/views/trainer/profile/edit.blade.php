@@ -37,52 +37,7 @@
 <body class="bg-gray-100">
     <div class="flex h-screen">
         {{-- SIDEBAR --}}
-        <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r">
-
-            <x-dashboard-header name="{{ auth()->user()->name }}" />
-
-            <nav class="mt-6">
-                <div class="px-4 py-2 text-xs font-medium text-zinc-400">Main</div>
-
-                @php $role = auth()->user()->role; @endphp
-
-                @if($role === 'trainer')
-                <x-nav-item text="Dashboard" color="text-gray-600" src="home.svg" location="trainer.dashboard" />
-                <div class="px-4 py-2 text-xs font-medium text-zinc-400 mt-6">My Activities</div>
-                <x-nav-item text="My Bookings" color="text-gray-600" src="calendar.svg" location="trainer.bookings" />
-                <x-nav-item text="My Classes" color="text-gray-600" src="class.svg" location="trainer.classes" />
-                @else
-                <x-nav-item text="Dashboard" color="text-gray-600" src="home.svg" location="dashboard" />
-                @endif
-            </nav>
-
-            {{-- User Profile Section (Sidebar Bottom) --}}
-            <div class="absolute bottom-0 w-64 p-4 flex justify-between bg-white border-t">
-                <div class="flex items-center">
-                    @if(auth()->user()->image_url)
-                    <img class="w-8 h-8 rounded-full object-cover" src="{{ auth()->user()->image_url }}" alt="{{ auth()->user()->name }}">
-                    @else
-                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                        <i class="fas fa-user text-gray-400 text-sm"></i>
-                    </div>
-                    @endif
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</p>
-                        <p class="text-xs text-gray-500">{{ ucfirst($role) }}</p>
-                    </div>
-                </div>
-                <div>
-                    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
-                        @csrf
-                    </form>
-                    <button onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                        <img src="{{ asset('icons/logout.svg') }}" alt="logout" class="w-4 h-4 mr-1">
-                        <span>Logout</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <x-trainer-sidebar activeMenu="" />
 
         {{-- MAIN CONTENT --}}
         <div class="flex-1 ml-64 p-4 h-screen overflow-y-auto scroll-container" x-data="profileTabs()">

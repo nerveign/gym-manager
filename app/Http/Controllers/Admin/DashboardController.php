@@ -245,7 +245,15 @@ class DashboardController extends Controller
 
         $transactions = $query->paginate(10);
 
-        return view('admin.transactions', compact('user', 'transactions'));
+        // Hitung statistik transaksi
+        $stats = [
+            'total' => Transaction::count(),
+            'completed' => Transaction::whereIn('status', ['completed', 'success'])->count(),
+            'pending' => Transaction::where('status', 'pending')->count(),
+            'total_amount' => Transaction::whereIn('status', ['completed', 'success'])->sum('amount')
+        ];
+
+        return view('admin.transactions', compact('user', 'transactions', 'stats'));
     }
 
     public function bookings(Request $request)

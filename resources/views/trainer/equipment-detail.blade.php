@@ -13,7 +13,7 @@
     <div class="flex h-screen">
 
         {{-- ================= SIDEBAR TRAINER ================= --}}
-        <div class="w-64 bg-white fixed left-0 top-0 h-full z-50 border-r flex flex-col">
+        <x-trainer-sidebar activeMenu="equipment" />
             
             <x-dashboard-header name="{{ $user->name }}" />
 
