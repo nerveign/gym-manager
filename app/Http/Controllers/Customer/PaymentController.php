@@ -267,12 +267,12 @@ class PaymentController extends Controller
             ]);
 
             // Check if already processed 
-            if ($transaction->status === 'success') {
-                Log::info('Transaction already processed as success', ['transaction_id' => $transaction->id]);
+            if ($transaction->status === 'completed') {
+                Log::info('Transaction already processed as completed', ['transaction_id' => $transaction->id]);
                 
                 return response()->json([
                     'success' => true,
-                    'status' => 'success',
+                    'status' => 'completed',
                     'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
                 ]);
             }
@@ -316,9 +316,9 @@ class PaymentController extends Controller
                             'va_number' => $request->va_number
                         ]);
                         
-                        // Update transaction ke success
+                        // Update transaction ke completed
                         $transaction->update([
-                            'status' => 'success',
+                            'status' => 'completed',
                             'paid_at' => now(),
                             'payment_data' => json_encode($checkData) // Store full response
                         ]);
@@ -333,7 +333,7 @@ class PaymentController extends Controller
                         
                         return response()->json([
                             'success' => true,
-                            'status' => 'success',
+                            'status' => 'completed',
                             'message' => 'Payment successful! Your membership has been activated.',
                             'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
                         ]);
@@ -449,13 +449,13 @@ class PaymentController extends Controller
             
             // Process payment status dari Doovera
             if ($status === 'paid' || $status === 'success' || $status === 'completed') {
-                // Update transaction ke success
+                // Update transaction ke completed
                 $transaction->update([
-                    'status' => 'success',
+                    'status' => 'completed',
                     'paid_at' => now()
                 ]);
                 
-                Log::info('Transaction updated to success via webhook', [
+                Log::info('Transaction updated to completed via webhook', [
                     'transaction_id' => $transaction->id,
                     'webhook_status' => $status
                 ]);
@@ -476,7 +476,7 @@ class PaymentController extends Controller
             }
             
             return response()->json([
-                'status' => 'success',
+                'status' => 'completed',
                 'message' => 'Webhook processed successfully'
             ]);
             
@@ -543,7 +543,7 @@ class PaymentController extends Controller
             }
             
             // Check if already processed 
-            if ($transaction->status === 'success') {
+            if ($transaction->status === 'completed') {
                 return response()->json([
                     'success' => true,
                     'status' => 'already_processed',
@@ -554,7 +554,7 @@ class PaymentController extends Controller
             
             // Simulate payment success
             $transaction->update([
-                'status' => 'success',
+                'status' => 'completed',
                 'paid_at' => now(),
                 'payment_data' => json_encode([
                     'simulated' => true,
@@ -574,7 +574,7 @@ class PaymentController extends Controller
             
             return response()->json([
                 'success' => true,
-                'status' => 'success',
+                'status' => 'completed',
                 'message' => 'Payment simulation successful! Membership activated.',
                 'redirect_url' => route('customer.payment.success', ['transaction_id' => $transaction->id])
             ]);

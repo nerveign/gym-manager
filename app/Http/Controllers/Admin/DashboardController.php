@@ -224,21 +224,32 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        $query = Transaction::with(['user', 'membership'])
+        $query = Transaction::with(['membership.user'])
             ->latest();
 
-        if ($request->has('search')) {
+        // Filter pencarian
+        if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            })->orWhere('transaction_code', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->whereHas('membership.user', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                })->orWhere('payment_gateway_id', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
         }
 
+        // Filter status
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         }
 
+        // Filter metode pembayaran
+        if ($request->has('payment_method') && $request->payment_method != '') {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Filter tanggal
         if ($request->has('date') && $request->date != '') {
             $query->whereDate('created_at', $request->date);
         }

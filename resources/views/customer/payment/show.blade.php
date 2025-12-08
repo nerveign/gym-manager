@@ -591,7 +591,7 @@
                 console.log('=== VERIFY RESPONSE SUCCESS ===');
                 console.log('Verify response:', data);
                 
-                if (data.success && data.status === 'success') {
+                if (data.success && data.status === 'completed') {
                     // Payment successful - redirect ke success page
                     console.log('Payment successful, redirecting to:', data.redirect_url);
                     

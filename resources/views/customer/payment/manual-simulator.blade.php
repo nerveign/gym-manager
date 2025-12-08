@@ -60,7 +60,7 @@
             .then(data => {
                 console.log('Webhook response:', data);
                 
-                if (data.status === 'success') {
+                if (data.status === 'completed') {
                     resultDiv.innerHTML = '<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">✅ Payment simulated successfully!</div>';
                     
                     // Auto redirect after 2 seconds

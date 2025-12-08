@@ -54,7 +54,7 @@
             
             $.post('/customer/payment/verify', { va_number: vaNumber })
             .done(function(data) {
-                if (data.success && data.status === 'success') {
+                if (data.success && data.status === 'completed') {
                     $('#result').html('<div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 5px;"><h4>✅ Payment Successful!</h4><p>Redirecting to success page...</p></div>');
                     setTimeout(function() {
                         window.location.href = data.redirect_url;

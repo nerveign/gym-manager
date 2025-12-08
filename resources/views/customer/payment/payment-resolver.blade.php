@@ -52,7 +52,7 @@
             Redirecting to success page...
         </div>
         
-        @if($transaction && $transaction->status === 'success')
+        @if($transaction && $transaction->status === 'completed')
             <button class="redirect-btn" onclick="goToSuccess()">
                 🎉 Go to Success Page
             </button>
